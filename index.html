@@ -1,0 +1,1360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Md Rakib | Tools for a fabrication shop</title>
+<meta name="description" content="Automation tools built by Md Rakib, a project coordinator in Edmonton. Document tracking, drawing packet printing, overtime costing and more, with live demos on sample data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%231E5A8A'/%3E%3Cg fill='%23FBFCFD'%3E%3Ccircle cx='10' cy='12' r='2.2'/%3E%3Ccircle cx='16' cy='12' r='2.2'/%3E%3Ccircle cx='22' cy='12' r='2.2'/%3E%3Ccircle cx='13' cy='20' r='2.2'/%3E%3Ccircle cx='19' cy='20' r='2.2'/%3E%3C/g%3E%3C/svg%3E">
+<script>
+  // Apply a saved theme before first paint so the page never flashes the wrong one.
+  (function () { try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<style>
+:root {
+  --paper: #F2F5F7;
+  --sheet: #FBFCFD;
+  --ink: #15212B;
+  --ink-2: #4A5A67;
+  --rule: #C5D0D8;
+  --grid: #E5EBEF;
+  --blue: #1E5A8A;
+  --blue-tint: #DCE8F2;
+  --red: #B8331F;
+  --red-tint: #F7E3DE;
+  --font: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Barlow Condensed", "Barlow", "Arial Narrow", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0D2236; --sheet: #112A42; --ink: #E6EEF4; --ink-2: #A9BCCB;
+    --rule: #2D4C69; --grid: #12304B; --blue: #7DB6E6; --blue-tint: #18395A;
+    --red: #FF8A70; --red-tint: #3A2530; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0D2236; --sheet: #112A42; --ink: #E6EEF4; --ink-2: #A9BCCB;
+  --rule: #2D4C69; --grid: #12304B; --blue: #7DB6E6; --blue-tint: #18395A;
+  --red: #FF8A70; --red-tint: #3A2530; color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.55;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+a { color: var(--blue); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+@media (max-width: 600px) { .wrap { padding: 0 16px; } body { font-size: 16px; } }
+.skip-link { position: absolute; left: -9999px; top: 8px; background: var(--ink); color: var(--paper); padding: 8px 12px; z-index: 10; }
+.skip-link:focus { left: 8px; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Header */
+.site-head { border-bottom: 1px solid var(--rule); background: var(--paper); }
+.site-head .wrap { display: flex; align-items: center; justify-content: space-between; gap: 8px 20px; min-height: 60px; flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }
+.brand { font-family: var(--display); font-weight: 700; font-size: 1.35rem; color: var(--ink); text-decoration: none; letter-spacing: .01em; }
+.site-nav { display: flex; align-items: center; gap: 8px 20px; flex-wrap: wrap; }
+.site-nav ul { display: flex; gap: 6px 18px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+.site-nav a { color: var(--ink-2); text-decoration: none; font-weight: 500; }
+.site-nav a:hover { color: var(--ink); text-decoration: underline; }
+.theme-btn { border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); font: 500 .875rem var(--font); padding: 5px 10px; border-radius: 2px; cursor: pointer; }
+
+/* Shared */
+.sheet { background: var(--sheet); border: 1px solid var(--rule); box-shadow: inset 0 0 0 4px var(--sheet), inset 0 0 0 5px var(--rule); padding: 22px; }
+@media (max-width: 600px) { .sheet { padding: 16px; } }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--ink); border-radius: 2px; font: 600 1rem var(--font); color: var(--ink); background: transparent; text-decoration: none; cursor: pointer; }
+.btn:hover { background: var(--blue-tint); }
+.btn.primary { background: var(--ink); color: var(--paper); }
+.btn.primary:hover { background: var(--blue); border-color: var(--blue); }
+.btn.small { padding: 6px 12px; font-size: .92rem; }
+.section { padding: 64px 0 24px; }
+.section h2 { font-family: var(--display); font-weight: 600; font-size: clamp(1.9rem, 3.4vw, 2.6rem); line-height: 1.05; margin: 0 0 10px; }
+.section .intro { color: var(--ink-2); max-width: 44rem; margin: 0 0 24px; font-size: 1.05rem; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 2px; background: var(--paper); }
+.seg button { border: 0; border-right: 1px solid var(--rule); background: transparent; padding: 6px 11px; font: 500 .9rem var(--font); color: var(--ink-2); cursor: pointer; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--blue-tint); color: var(--ink); }
+.linklike { border: 0; background: none; padding: 0; cursor: pointer; color: var(--blue); text-decoration: underline; text-underline-offset: 3px; font: inherit; font-size: .92rem; }
+
+/* Hero */
+.hero { padding: 56px 0 24px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 36px; }
+@media (min-width: 1000px) { .hero-grid { grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: 48px; align-items: start; } }
+.hero h1 { font-family: var(--display); font-weight: 600; font-size: clamp(2.6rem, 5.6vw, 4.5rem); line-height: .98; letter-spacing: -.005em; margin: 0 0 22px; max-width: 16ch; }
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 34rem; margin: 0; }
+.lede + .lede { margin-top: 12px; }
+.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 28px 0 32px; }
+.titleblock { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1.5px solid var(--ink); background: var(--sheet); max-width: 34rem; margin: 0; }
+.titleblock > div { padding: 7px 12px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.titleblock > div:nth-child(2n) { border-right: 0; }
+.titleblock > div:nth-last-child(-n+2) { border-bottom: 0; }
+.titleblock dt { font-size: .78rem; color: var(--ink-2); }
+.titleblock dd { margin: 0; font-weight: 600; font-size: .98rem; }
+
+/* Packet printer run */
+.run-top { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.run-title { font-family: var(--display); font-weight: 600; font-size: 1.3rem; margin: 0; }
+.run-cap { color: var(--ink-2); font-size: .95rem; margin: 2px 0 0; }
+.run-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.mail { border: 1px solid var(--rule); border-left: 3px solid var(--blue); padding: 10px 14px; margin-bottom: 14px; background: var(--paper); }
+.mail .from { font-size: .85rem; color: var(--ink-2); }
+.mail .subj { font-weight: 600; }
+.files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.file { font: .78rem var(--mono); padding: 2px 6px; border: 1px solid var(--rule); background: var(--sheet); }
+.steps { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 7px; }
+.steps li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; color: var(--ink-2); }
+.steps .ic { width: 20px; height: 20px; border: 1.5px solid var(--rule); border-radius: 50%; margin-top: 2px; display: grid; place-items: center; font-size: 12px; font-weight: 700; line-height: 1; }
+.steps li.active { color: var(--ink); }
+.steps li.active .ic { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-tint); }
+.steps li.done { color: var(--ink); }
+.steps li.done .ic { background: var(--blue); border-color: var(--blue); color: var(--sheet); }
+.steps li.fail { color: var(--ink); }
+.steps li.fail .ic { background: var(--red); border-color: var(--red); color: var(--sheet); }
+.steps li.skip .ic { border-style: dashed; }
+.steps li.skip { opacity: .75; }
+.steps .step-note { display: block; font-size: .87rem; color: var(--ink-2); }
+.stations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 480px) { .stations { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tray { border: 1px solid var(--rule); padding: 8px 10px; background: var(--paper); min-height: 70px; }
+.tray .nm { font-size: .85rem; font-weight: 600; }
+.tray .pile { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px; min-height: 20px; align-items: flex-end; }
+.tray .pile i { display: block; width: 11px; height: 15px; border: 1px solid var(--ink-2); background: var(--sheet); animation: drop .3s ease-out; }
+.tray .pile i.ledger { width: 17px; height: 12px; }
+.tray .pile i.signoff { border-color: var(--blue); background: var(--blue-tint); }
+@keyframes drop { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+.legend-mini { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .8rem; color: var(--ink-2); margin-top: 8px; }
+.legend-mini span { display: inline-flex; align-items: center; gap: 6px; }
+.legend-mini i { display: inline-block; border: 1px solid var(--ink-2); background: var(--sheet); }
+.run-result { margin: 14px 0 0; font-weight: 600; min-height: 1.5em; }
+
+/* Register */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; align-items: center; }
+.filters .lbl { font-size: .92rem; color: var(--ink-2); margin-right: 4px; }
+.chip { border: 1px solid var(--rule); background: var(--sheet); padding: 4px 11px; border-radius: 999px; font: 500 .875rem var(--font); color: var(--ink); cursor: pointer; }
+.chip:hover { border-color: var(--ink-2); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.register { border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); background: var(--sheet); }
+.tool + .tool { border-top: 1px solid var(--rule); }
+.tool-head {
+  display: grid; width: 100%; text-align: left; background: none; border: 0; color: inherit; font: inherit; cursor: pointer;
+  padding: 18px 20px; gap: 8px 24px;
+  grid-template-columns: minmax(0, 1fr) 20px;
+  grid-template-areas: "main chev" "status status" "tags tags";
+}
+.tool-head:hover { background: var(--blue-tint); }
+@media (min-width: 900px) {
+  .tool-head { grid-template-columns: minmax(0, 1.7fr) 150px minmax(0, 1fr) 20px; grid-template-areas: "main status tags chev"; align-items: center; }
+}
+.tool-main { grid-area: main; }
+.tool-name { font-family: var(--display); font-weight: 600; font-size: 1.45rem; line-height: 1.15; display: block; }
+.tool-sum { color: var(--ink-2); font-size: .98rem; display: block; margin-top: 2px; }
+.tool-status { grid-area: status; font-size: .9rem; font-weight: 500; }
+.tool-status::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); margin-right: 8px; vertical-align: 1px; }
+.tags { grid-area: tags; display: flex; flex-wrap: wrap; gap: 5px; }
+.tag { font-size: .8rem; padding: 1px 8px; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink-2); background: var(--paper); }
+.chev { grid-area: chev; width: 14px; height: 14px; justify-self: end; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(45deg) translate(-3px, -3px); transition: transform .2s; }
+.tool-head[aria-expanded="true"] .chev { transform: rotate(225deg) translate(-3px, -3px); }
+.tool-body { padding: 6px 20px 26px; display: grid; gap: 26px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .tool-body { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr); } }
+.tool-body h3 { font-family: var(--display); font-size: 1.12rem; font-weight: 600; margin: 0 0 6px; }
+.tool-body p { margin: 0 0 12px; font-size: .97rem; }
+.flow { list-style: none; counter-reset: s; margin: 0; padding: 0; }
+.flow li { counter-increment: s; position: relative; padding: 0 0 12px 32px; font-size: .95rem; }
+.flow li::before { content: counter(s); position: absolute; left: 0; top: 1px; width: 21px; height: 21px; border: 1px solid var(--blue); border-radius: 50%; font-size: .75rem; font-weight: 600; display: grid; place-items: center; color: var(--blue); background: var(--sheet); }
+.flow li::after { content: ""; position: absolute; left: 10.5px; top: 23px; bottom: 1px; border-left: 1px solid var(--rule); }
+.flow li:last-child::after { display: none; }
+.results { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.results li { padding-left: 12px; border-left: 3px solid var(--blue); font-size: .95rem; }
+.tool-links { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 16px; font-weight: 600; font-size: .95rem; }
+.count-note { font-size: .9rem; color: var(--ink-2); margin: 10px 0 0; }
+
+/* Demos */
+.tabs { display: flex; flex-wrap: wrap; border-bottom: 1.5px solid var(--ink); }
+.tab { border: 1px solid transparent; border-bottom: 0; background: none; padding: 10px 16px; margin-bottom: -1.5px; font: 600 1rem var(--font); color: var(--ink-2); cursor: pointer; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--sheet); border-color: var(--ink); border-width: 1.5px 1.5px 0; color: var(--ink); }
+.panel { background: var(--sheet); border: 1.5px solid var(--ink); border-top: 0; padding: 22px; }
+@media (max-width: 600px) { .panel { padding: 16px; } .tab { padding: 8px 10px; font-size: .95rem; } }
+.panel-intro { margin: 0 0 18px; max-width: 46rem; color: var(--ink-2); }
+.ctrls { display: flex; flex-wrap: wrap; gap: 14px 36px; margin-bottom: 14px; }
+.ctrl label, .ctrl .lab { display: block; font-weight: 600; font-size: .95rem; margin-bottom: 4px; }
+.ctrl .row { display: flex; align-items: center; gap: 10px; }
+.ctrl input[type="range"] { width: min(170px, 34vw); accent-color: var(--blue); }
+.num { width: 66px; padding: 4px 6px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); font: inherit; border-radius: 2px; }
+.summary-line { font-size: 1.08rem; margin: 6px 0 10px; }
+.summary-line strong { font-weight: 700; }
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .lane-label { fill: var(--ink-2); font: 500 12px var(--font); }
+.chart .axis text { fill: var(--ink-2); font: 11px var(--font); }
+.chart .axis line, .chart .lane-rule { stroke: var(--rule); stroke-width: 1; }
+.chart .thr { stroke: var(--red); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.chart .thr-label { fill: var(--red); font: 600 11px var(--font); }
+.chart .dot { fill: var(--sheet); stroke: var(--blue); stroke-width: 2; pointer-events: none; }
+.chart .dot.over { fill: var(--red); stroke: var(--sheet); stroke-width: 2; }
+.chart .hit { fill: transparent; cursor: default; }
+.chart .hit:hover + .dot, .chart .dot.hot { stroke-width: 3.5; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--paper); font-size: .82rem; line-height: 1.35; padding: 6px 9px; border-radius: 2px; max-width: 240px; transform: translate(-50%, calc(-100% - 12px)); white-space: normal; z-index: 3; }
+.tip[hidden] { display: none; }
+.key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .85rem; color: var(--ink-2); margin: 6px 0 0; }
+.key span { display: inline-flex; align-items: center; gap: 6px; }
+.cards-grid { display: grid; gap: 20px; margin-top: 22px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .cards-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.cards-grid h3 { font-family: var(--display); font-weight: 600; font-size: 1.2rem; margin: 0 0 8px; }
+.cards { display: grid; gap: 8px; }
+.fcard { border: 1px solid var(--rule); padding: 10px 12px; background: var(--paper); }
+.fcard .t { font-weight: 600; }
+.fcard .meta { font-size: .88rem; color: var(--ink-2); }
+.fcard .age { font-size: .9rem; font-weight: 600; color: var(--red); }
+.fcard pre { white-space: pre-wrap; font: .78rem/1.55 var(--mono); background: var(--sheet); border: 1px solid var(--rule); padding: 10px; margin: 8px 0 0; }
+.more { font-size: .88rem; color: var(--ink-2); margin: 4px 0 0; }
+.empty { color: var(--ink-2); font-size: .95rem; padding: 10px 0; }
+
+.ot-grid { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .ot-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); } }
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--rule); background: var(--paper); }
+table.ot { border-collapse: collapse; width: 100%; font-size: .92rem; min-width: 300px; }
+table.ot th, table.ot td { border-bottom: 1px solid var(--rule); padding: 7px 6px; text-align: left; vertical-align: middle; }
+table.ot tr:last-child td { border-bottom: 0; }
+table.ot thead th { font-weight: 600; color: var(--ink-2); font-size: .85rem; background: var(--sheet); }
+table.ot .daycol { text-align: center; }
+table.ot .job { font-weight: 600; }
+table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
+.shift { width: 34px; height: 28px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2); font: 600 .8rem var(--font); cursor: pointer; border-radius: 2px; }
+.shift[aria-pressed="true"] { background: var(--blue); color: var(--sheet); border-color: var(--blue); }
+.dtbox { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; font-weight: 500; color: var(--ink-2); margin-top: 2px; }
+.dtbox input { accent-color: var(--red); margin: 0; }
+.ot-side h3, .ot-main h3 { font-family: var(--display); font-weight: 600; font-size: 1.2rem; margin: 18px 0 8px; }
+.ot-side h3:first-child, .ot-main h3:first-child { margin-top: 0; }
+.email { white-space: pre-wrap; font: .78rem/1.6 var(--mono); background: var(--paper); border: 1px solid var(--rule); padding: 12px; max-height: 360px; overflow: auto; margin: 0; }
+.split { display: grid; gap: 8px; }
+.bar-row { display: grid; grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr) 5.2rem; gap: 10px; align-items: center; font-size: .9rem; }
+.bar-row .v { text-align: right; font-variant-numeric: tabular-nums; }
+.bar { height: 12px; background: var(--grid); position: relative; }
+.bar span { position: absolute; inset: 0 auto 0 0; background: var(--blue); border-radius: 0 2px 2px 0; }
+.bar.old span { background: var(--ink-2); }
+.split-cap { font-size: .85rem; color: var(--ink-2); margin: 12px 0 6px; font-weight: 600; }
+.missing { color: var(--red); font-weight: 600; margin: 10px 0 0; }
+.toggle-line { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; font-size: .95rem; }
+.toggle-line input { accent-color: var(--blue); width: 16px; height: 16px; }
+
+.tube-grid { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .tube-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.tubesheet { width: 100%; max-width: 460px; margin: 0 auto; display: block; }
+.tubesheet .shell { fill: var(--paper); stroke: var(--ink); stroke-width: 2; }
+.tubesheet .lane { stroke: var(--rule); stroke-width: 1; stroke-dasharray: 3 3; }
+.tubesheet .hole { fill: var(--sheet); stroke: var(--ink-2); stroke-width: 1; }
+.tubesheet .hole.s { fill: var(--blue); stroke: var(--blue); }
+.tubesheet .ring { fill: none; stroke: var(--red); stroke-width: 2.5; }
+.tubesheet .rowno { fill: var(--ink-2); font: 9px var(--font); }
+.readout { font-size: .9rem; color: var(--ink-2); min-height: 1.4em; margin: 6px 0 0; text-align: center; }
+.sample-list { display: flex; flex-wrap: wrap; gap: 4px; max-height: 148px; overflow: auto; padding: 8px; border: 1px solid var(--rule); background: var(--paper); margin: 8px 0 18px; }
+.loc { font: .76rem var(--mono); padding: 1px 5px; border: 1px solid var(--rule); background: var(--sheet); }
+.check-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.check-row input { font: .95rem var(--mono); padding: 7px 8px; width: 120px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); border-radius: 2px; text-transform: uppercase; }
+.verdict { margin: 10px 0 0; min-height: 1.5em; font-weight: 600; }
+.verdict.bad { color: var(--red); }
+.verdict.ok { color: var(--blue); }
+
+/* Notes */
+.notes { display: grid; gap: 0; border-top: 1.5px solid var(--ink); }
+.note { display: grid; gap: 4px 32px; padding: 18px 0; border-bottom: 1px solid var(--rule); }
+@media (min-width: 900px) { .note { grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); } }
+.note h3 { font-family: var(--display); font-weight: 600; font-size: 1.3rem; line-height: 1.15; margin: 0; }
+.note p { margin: 0; color: var(--ink-2); max-width: 44rem; }
+
+/* Other work */
+.other { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .other { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.other h3 { font-family: var(--display); font-weight: 600; font-size: 1.4rem; margin: 0 0 2px; }
+.other .where { color: var(--ink-2); font-size: .92rem; margin: 0 0 10px; }
+.other p { margin: 0 0 12px; }
+
+/* Toolbox */
+.toolbox { display: grid; gap: 0; border-top: 1.5px solid var(--ink); }
+.tb-row { display: grid; gap: 4px 24px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
+@media (min-width: 900px) { .tb-row { grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); } }
+.tb-row dt { font-weight: 600; }
+.tb-row dd { margin: 0; color: var(--ink-2); }
+
+/* Footer */
+.site-foot { margin-top: 72px; border-top: 1.5px solid var(--ink); background: var(--sheet); }
+.foot-grid { display: grid; gap: 24px; padding: 36px 0 40px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .foot-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: end; } }
+.site-foot h2 { font-family: var(--display); font-weight: 600; font-size: 2rem; margin: 0 0 8px; }
+.site-foot p { margin: 0; color: var(--ink-2); }
+.contact { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 1.05rem; }
+.contact a { font-weight: 600; }
+.fine { font-size: .85rem; color: var(--ink-2); margin-top: 22px !important; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="#top">Md Rakib</a>
+    <nav class="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="#tools">Tools</a></li>
+        <li><a href="#try">Try them</a></li>
+        <li><a href="#notes">Notes</a></li>
+        <li><a href="#other">Other work</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <button class="theme-btn" id="theme" type="button">Blueprint view</button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div>
+        <h1>Tools that take the busywork out of a fabrication shop.</h1>
+        <p class="lede">I coordinate heat exchanger and pressure vessel jobs at a fabrication shop in Edmonton, and I automate the parts of the work that repeat.</p>
+        <p class="lede">I build in Python, PowerShell and Power Automate, on top of the Excel logs and Outlook inboxes the shop already runs on. Most of what's below is in daily use by my team.</p>
+        <div class="cta-row">
+          <a class="btn primary" href="#tools">See the tools</a>
+          <a class="btn" href="#try">Try the demos</a>
+        </div>
+        <dl class="titleblock" aria-label="About">
+          <div><dt>Drawn by</dt><dd>Md Rakib</dd></div>
+          <div><dt>Role</dt><dd>Project coordinator</dd></div>
+          <div><dt>Location</dt><dd>Edmonton, Alberta</dd></div>
+          <div><dt>Background</dt><dd>BSc Physics and Mathematics</dd></div>
+        </dl>
+      </div>
+
+      <div class="sheet" aria-labelledby="run-title">
+        <div class="run-top">
+          <div>
+            <h2 class="run-title" id="run-title">Drawing packet printer, on a sample email</h2>
+            <p class="run-cap">An Issued for Construction email arrives. Six shop stations get their drawings. Pick a case and run it.</p>
+          </div>
+        </div>
+        <div class="run-controls">
+          <div class="seg" role="group" aria-label="Sample email" id="run-cases"></div>
+          <button class="btn small primary" type="button" id="run-btn">Run</button>
+        </div>
+        <div class="mail" id="run-mail" aria-label="Sample email"></div>
+        <ol class="steps" id="run-steps"></ol>
+        <div class="stations" id="run-stations"></div>
+        <div class="legend-mini" aria-hidden="true">
+          <span><i style="width:9px;height:12px"></i>Drawing register, letter</span>
+          <span><i style="width:14px;height:10px"></i>Drawing, ledger</span>
+          <span><i style="width:9px;height:12px;border-color:var(--blue);background:var(--blue-tint)"></i>Sign-off sheet</span>
+        </div>
+        <p class="run-result" id="run-result" role="status" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tools" aria-labelledby="tools-h">
+    <div class="wrap">
+      <h2 id="tools-h">Tools in service</h2>
+      <p class="intro">Each one replaced a job someone did by hand. Open a row to see the problem, how it works and what changed. Figures are from my own logs. Where a time saving is an estimate, it says so.</p>
+      <div class="filters" id="filters" role="group" aria-label="Filter by what it's built with"></div>
+      <div class="register" id="register"></div>
+      <p class="count-note" id="reg-count" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="section" id="try" aria-labelledby="try-h">
+    <div class="wrap">
+      <h2 id="try-h">Try them</h2>
+      <p class="intro">Working versions of three tools, running in your browser on made-up data. The real ones run on company files, so none of that data is here.</p>
+      <div class="tabs" role="tablist" aria-label="Demos">
+        <button class="tab" role="tab" id="tab-dc" aria-controls="panel-dc" aria-selected="true">Document follow-up</button>
+        <button class="tab" role="tab" id="tab-ot" aria-controls="panel-ot" aria-selected="false" tabindex="-1">Overtime costing</button>
+        <button class="tab" role="tab" id="tab-tube" aria-controls="panel-tube" aria-selected="false" tabindex="-1">Tube sample check</button>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-dc" aria-labelledby="tab-dc" tabindex="0">
+        <p class="panel-intro">Every document a client hasn't returned, and every revision we owe back, on one chart. Move the limits and the follow-up list rebuilds. The real dashboard does this for 5,000+ documents.</p>
+        <div class="ctrls">
+          <div class="ctrl">
+            <label for="dc-client">Client review allowance</label>
+            <div class="row">
+              <input type="range" id="dc-client-r" min="3" max="40" value="14" aria-label="Client review allowance, business days">
+              <input class="num" type="number" id="dc-client" min="3" max="40" value="14"> <span>business days</span>
+            </div>
+          </div>
+          <div class="ctrl">
+            <label for="dc-int">Internal turnaround</label>
+            <div class="row">
+              <input type="range" id="dc-int-r" min="1" max="20" value="5" aria-label="Internal turnaround, business days">
+              <input class="num" type="number" id="dc-int" min="1" max="20" value="5"> <span>business days</span>
+            </div>
+          </div>
+        </div>
+        <p class="summary-line" id="dc-summary" aria-live="polite"></p>
+        <div class="chart" id="dc-chart"></div>
+        <div class="key" aria-hidden="true">
+          <span><svg width="12" height="12"><circle cx="6" cy="6" r="4.5" fill="var(--sheet)" stroke="var(--blue)" stroke-width="2"/></svg>Within the limit</span>
+          <span><svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="var(--red)"/></svg>Needs a follow-up</span>
+          <span><svg width="12" height="12"><path d="M6 0.5 L11.5 6 L6 11.5 L0.5 6Z" fill="var(--red)"/></svg>Code 3, stop work, always flagged</span>
+          <span><svg width="22" height="12"><line x1="0" y1="6" x2="22" y2="6" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="5 4"/></svg>Limit</span>
+        </div>
+        <div class="cards-grid">
+          <div><h3>Client follow-ups</h3><div class="cards" id="dc-client-cards"></div></div>
+          <div><h3>Internal follow-ups</h3><div class="cards" id="dc-int-cards"></div></div>
+        </div>
+        <p class="count-note">The full dashboard, with its own fictional logs: <a href="https://mdrakib22b.github.io/document-control-tracker/">live demo</a> and <a href="https://github.com/mdrakib22b/document-control-tracker">source code</a>.</p>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-ot" aria-labelledby="tab-ot" tabindex="0" hidden>
+        <p class="panel-intro">The weekly overtime request, filled in during the meeting. Toggle shifts and headcount and watch the cost, the client split and the approval email update. Then compare against the spreadsheet it replaced.</p>
+        <div class="ot-grid">
+          <div class="ot-main">
+            <div class="ctrls" style="margin-bottom:10px">
+              <div class="ctrl">
+                <label for="ot-rate">Sample rate</label>
+                <div class="row"><span>$</span><input class="num" type="number" id="ot-rate" min="1" max="500" value="60"><span>per hour</span></div>
+              </div>
+              <div class="ctrl"><span class="lab">Shift length</span><div class="row" style="min-height:32px">12 hours, Friday to Sunday</div></div>
+            </div>
+            <div class="tbl-wrap"><table class="ot" id="ot-table"></table></div>
+            <label class="toggle-line"><input type="checkbox" id="ot-old"> Compare with the old spreadsheet's client split</label>
+            <h3>Split by client</h3>
+            <div id="ot-split"></div>
+          </div>
+          <div class="ot-side">
+            <h3>Approval email</h3>
+            <pre class="email" id="ot-email" aria-live="polite"></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-tube" aria-labelledby="tab-tube" tabindex="0" hidden>
+        <p class="panel-intro">Quality control logs a 10% sample of rolled tubes by row and hole. The procedure spreads the sample across the tubesheet and checks that every location it writes actually exists. Point at a hole to read its location.</p>
+        <div class="tube-grid">
+          <div>
+            <div id="tube-svg"></div>
+            <p class="readout" id="tube-readout" aria-live="polite">Point at a hole</p>
+          </div>
+          <div>
+            <div class="row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <button class="btn small primary" type="button" id="tube-draw">Draw a new sample</button>
+              <span id="tube-count"></span>
+            </div>
+            <div class="sample-list" id="tube-list" aria-label="Sampled locations"></div>
+            <label for="tube-input" style="font-weight:600;display:block;margin-bottom:4px">Check a location</label>
+            <div class="check-row">
+              <input id="tube-input" type="text" placeholder="R7H12" autocomplete="off" spellcheck="false">
+              <button class="btn small" type="button" id="tube-check">Check</button>
+              <button class="linklike" type="button" id="tube-bad">Try an impossible one</button>
+            </div>
+            <p class="verdict" id="tube-verdict" role="status" aria-live="polite"></p>
+            <p class="count-note">On a 1,612-tube exchanger the sample is about 480 locations once it's written into all three parts of the log. Typing those by hand is where a location that can't exist slips in. This check caught one in a signed reference log.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="notes" aria-labelledby="notes-h">
+    <div class="wrap">
+      <h2 id="notes-h">What building them taught me</h2>
+      <p class="intro">Each of these came from something breaking.</p>
+      <div class="notes">
+        <div class="note"><h3>Wait for an event. Don't poll.</h3><p>The packet printer runs only when mail arrives. Between emails nothing is running at all. A scheduled task checking the inbox every few minutes would have run all day for something that happens a few times.</p></div>
+        <div class="note"><h3>Check the parse before building on it</h3><p>The first dashboard read the wrong column and hid four real follow-ups. I only caught it because the list looked too short. Now every parser gets checked against the source file before anything is built on top of it.</p></div>
+        <div class="note"><h3>Anything from an email is untrusted</h3><p>A folder link in an email body is only opened if it sits under a known root and names the job in the subject. The handler behind a clickable link assumes hostile input and never runs a file.</p></div>
+        <div class="note"><h3>Publish a clean copy, never a branch</h3><p>Work code goes public as a new repository with fresh history, renamed terms and generated data. A spreadsheet is a zip file, so the scan for leftovers goes inside the binaries too.</p></div>
+        <div class="note"><h3>Time the old way first</h3><p>Most of my before numbers are estimates. They make the case for the work, so next time I'll measure the manual process before I replace it.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="other" aria-labelledby="other-h">
+    <div class="wrap">
+      <h2 id="other-h">Before this, and on my own time</h2>
+      <p class="intro">I came to fabrication from ERP implementation at a manufacturer, where the job was moving messy operational data into a system that could use it.</p>
+      <div class="other">
+        <article class="sheet">
+          <h3>Bill of material migration</h3>
+          <p class="where">Sico Paints, ERP functional consultant, 2024 to 2026</p>
+          <p>A Python script that parsed CSV bills of material into JSON matched to the ERP's API schema and imported them over REST. 170+ bills of material loaded in hours instead of weeks of manual entry, as part of a go-live across 4 locations and 20+ users.</p>
+          <div class="tags"><span class="tag">Python</span><span class="tag">REST APIs</span><span class="tag">Postman</span><span class="tag">Data migration</span></div>
+        </article>
+        <article class="sheet">
+          <h3>Ni'ma, a personal finance app</h3>
+          <p class="where">Side project, built for my own use</p>
+          <p>Net worth, budgets, investments, debt and savings goals in one installable web app. No framework and no backend. All data stays in the browser, with optional AES-256-GCM encryption at rest. A small serverless function fetches prices and exchange rates, and headless browser smoke tests cover the main flows.</p>
+          <div class="tags"><span class="tag">JavaScript</span><span class="tag">PWA</span><span class="tag">Web Crypto</span><span class="tag">Serverless</span></div>
+          <div class="tool-links"><a href="https://nima-three-bay.vercel.app/">Open the app</a></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="toolbox" aria-labelledby="toolbox-h">
+    <div class="wrap">
+      <h2 id="toolbox-h">What I work with</h2>
+      <dl class="toolbox">
+        <div class="tb-row"><dt>Languages</dt><dd>Python, PowerShell, JavaScript, HTML and CSS, Outlook VBA, Power Fx</dd></div>
+        <div class="tb-row"><dt>Microsoft 365</dt><dd>Power Automate, Power Query, SharePoint, Excel, Outlook automation over COM, Power BI</dd></div>
+        <div class="tb-row"><dt>Systems</dt><dd>Pronto Xi ERP, Qoyod, Odoo, ERPNext, REST APIs, Git and GitHub, Windows Task Scheduler</dd></div>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot" id="contact">
+  <div class="wrap foot-grid">
+    <div>
+      <h2>Get in touch</h2>
+      <p>If any of this would be useful where you work, I'd like to hear about it.</p>
+    </div>
+    <ul class="contact">
+      <li><a href="https://www.linkedin.com/in/mdrakib22b/">LinkedIn</a></li>
+    </ul>
+  </div>
+  <div class="wrap"><p class="fine" style="padding-bottom:28px">One HTML file on GitHub Pages. Every name, job number and figure in the demos is made up.</p></div>
+</footer>
+
+<script>
+'use strict';
+
+/* ------------------------------------------------------------------
+   Content. Edit this list to add or change a tool. Keep it free of
+   employer, client and colleague names, job numbers and dollar values.
+------------------------------------------------------------------- */
+const TOOLS = [
+  {
+    name: 'Document follow-up dashboard',
+    summary: "One page that shows which documents a client is sitting on, and which revisions we owe back.",
+    status: 'Team uses it',
+    stack: ['Python', 'PowerShell', 'JavaScript', 'Excel', 'Outlook'],
+    problem: "Document Control logs every drawing and inspection plan in two Excel workbooks, one sheet per job. Finding out what a client still had meant reading job sheets by hand. Nothing watched the revisions we owed after a client returned a document with comments.",
+    built: "A Python pipeline that copies both logs, parses every sheet without hard-coded column letters, decides where each document is in its approval cycle, and writes one self-contained HTML page. PowerShell rebuilds it hourly on weekdays and lets links in the page open a job folder or a ready-to-send Outlook draft.",
+    steps: ['Snapshot both logs off the network share', 'Parse 300+ job sheets, finding columns by header text', 'Link each transmittal to its sent and received folders', 'Place every document in one of eleven stages', 'Group overdue items into one follow-up email each', 'Publish one offline HTML page, swapped in atomically'],
+    results: ['5,000+ documents across 312 job sheets on one page', '210 client and 80 internal follow-ups named in a single run', '98% of transmittals linked to their folders automatically', 'Skips the rebuild in half a second when nothing has changed', 'Found 4 follow-ups the first version had hidden by reading the wrong column'],
+    links: [
+      { label: 'Live demo', href: 'https://mdrakib22b.github.io/document-control-tracker/' },
+      { label: 'Source code', href: 'https://github.com/mdrakib22b/document-control-tracker' },
+      { label: 'Try the limits demo', tab: 'tab-dc' }
+    ]
+  },
+  {
+    name: 'Drawing packet printer',
+    summary: 'An Issued for Construction email arrives and the shop’s drawing packets print themselves.',
+    status: 'Team uses it',
+    stack: ['Python', 'PowerShell', 'VBA', 'Outlook', 'Excel'],
+    problem: 'Each Issued for Construction email meant saving attachments, sorting PDFs, printing a letter and a ledger set for six shop stations, then building a sign-off sheet by hand. Ten to fifteen minutes a packet, several times a day.',
+    built: 'An Outlook event, not a polling loop. New mail wakes a VBA handler, which starts a PowerShell runner, which calls Python. Python checks the sender and subject, sorts the drawings, prints to two printers in station order, fills the sign-off sheet from the drawing register, and tags the email with the result. Nothing runs between emails.',
+    steps: ['Outlook raises an event on new mail', 'Check the sender list, a subject keyword and exactly one job number', 'Refuse replies and forwards so nothing prints twice', 'Save attachments and sort the PDFs by document type', 'Print letter and ledger sets for six stations on two printers', 'Build the sign-off sheet and tag the email printed or failed'],
+    results: ['14 packets in its first four weeks', '3 printed start to finish with nobody involved', 'First live packet sent 13 print jobs to 2 printers in 6 minutes', 'Each email is claimed once by its message ID, so a restart can’t print twice', 'Failures land in an exceptions folder with the reason written down'],
+    links: [{ label: 'Run it at the top of the page', href: '#top' }]
+  },
+  {
+    name: 'Overtime costing tool',
+    summary: 'Builds the weekly overtime approval email live in the meeting, costed and split by client.',
+    status: 'Used every week',
+    stack: ['JavaScript', 'Python', 'PowerShell', 'Outlook'],
+    problem: 'The weekly overtime request was rebuilt from meeting notes afterwards. Trades, headcounts, costs and client names were all reconstructed by hand, then checked line by line.',
+    built: 'A single offline HTML page. Python exports the job list to a script the page can read, so it fills in the client for any job without uploading anything. Shifts are toggled per trade and day, the cost math runs as you type, and one button opens a signed Outlook draft.',
+    steps: ['Export the job list to a local data file', 'Enter each job, trade, headcount and shift during the meeting', 'Cost every line at time and a half and double time', 'Split the total by client with percentages that always add to 100', 'Open a ready-to-send Outlook draft with the signature intact'],
+    results: ['About 80 minutes a week of after-meeting work gone (my estimate)', 'Client lookup across 1,442 jobs', 'Showed the old spreadsheet had left 37% of one week’s cost out of the client split', '177 spellings of customer names merged into 109'],
+    links: [{ label: 'Try the costing demo', tab: 'tab-ot' }]
+  },
+  {
+    name: 'Network document register',
+    summary: 'A searchable index of every file across seven network folders, built in about a minute.',
+    status: 'Refreshable',
+    stack: ['PowerShell', 'Power Query', 'Excel'],
+    problem: 'A handover needed a register of what lived where. The first pass, screenshots and typing, took two hours and found 110 files.',
+    built: 'A PowerShell script walks seven network locations and writes the path, size and date of every file. Power Query shapes that into a master index with clickable links, then compares it against the procedure manual’s own list.',
+    steps: ['Walk seven network locations with PowerShell', 'Write path, size and date for every file', 'Shape it into a master index with Power Query', 'Match it against the procedure manual’s list'],
+    results: ['2,040 files indexed in about one minute', 'Replaced an estimated 15 to 20 hours of typing', '1,366 clickable file links in the final index', 'Flagged 112 listed procedures with no live copy', 'Refreshes with one click instead of starting over'],
+    links: []
+  },
+  {
+    name: 'SharePoint bulk loader',
+    summary: 'Loaded a whole contract register into a SharePoint list in two minutes.',
+    status: 'Reusable',
+    stack: ['Power Automate', 'Power Fx', 'SharePoint', 'Excel'],
+    problem: '168 contract records had to go into a SharePoint list through its form, one record at a time, thirteen fields each.',
+    built: 'A Power Automate flow reads the cleaned Excel table, converts each field with Power Fx expressions and creates the list items. I tested it on a handful of rows before the full run.',
+    steps: ['Clean and validate the source table in Excel', 'Map thirteen fields with Power Fx', 'Test on a small batch', 'Run the full load'],
+    results: ['168 records in 2 minutes 9 seconds', 'Replaced about a day of form entry', 'Reusable for the next import'],
+    links: []
+  },
+  {
+    name: 'Tube rolling log procedure',
+    summary: 'Turns a tubesheet layout into a 10% inspection sample and checks every location is real.',
+    status: 'Quality control runs it',
+    stack: ['Excel', 'Data validation'],
+    problem: 'Quality control logs a 10% sample of rolled tubes. On a 1,612-tube exchanger that meant hand-typing about 480 row-and-hole locations across three parts of the log.',
+    built: 'One written procedure quality control runs per job. It counts the layout, spreads the sample across the tubesheet, writes the locations into the log and checks each one against the layout.',
+    steps: ['Count holes per row from the layout', 'Spread a 10% sample across the tubesheet', 'Write the locations into all three parts of the log', 'Check every location against the layout'],
+    results: ['About 480 hand-typed locations gone on a 1,612-tube exchanger', 'Caught a location that could not exist in a signed reference log', 'Proven on layouts from 351 to 2,393 tubes'],
+    links: [{ label: 'Try the sample check', tab: 'tab-tube' }]
+  },
+  {
+    name: 'Field inspection form',
+    summary: 'An air cooler inspection checklist that keeps its layout when photos go in.',
+    status: 'Team uses it',
+    stack: ['JavaScript', 'HTML and CSS'],
+    problem: 'Field inspections were filled into a Word checklist. Adding photos reflowed the document, so every report came back looking different.',
+    built: 'A single offline HTML file with drag-and-drop photo slots, unit tags and signatures, printing to a fixed six-page layout.',
+    steps: ['Fill in 31 inspection points, each with a comment', 'Drop photos into fixed slots', 'Sign and print to six pages'],
+    results: ['31 inspection points with a comment field on every line', 'The same six-page report for every unit', 'Works offline in the field with nothing to install'],
+    links: []
+  },
+  {
+    name: 'New job handoff',
+    summary: 'One email that tells every department what was sold and what they owe on day one.',
+    status: 'Every new job',
+    stack: ['Excel', 'Outlook'],
+    problem: 'When a purchase order came in, each department chased Commercial separately for the same scope, delivery and terms.',
+    built: 'A standard handoff, checked line by line against the quote and the estimate before it goes out, with a named action for each department.',
+    steps: ['Check the purchase order against the quote and estimate', 'Pull scope, delivery, terms and materials into one format', 'Assign an action to each department', 'Send to the whole project team'],
+    results: ['40+ new jobs announced', 'About 30 recipients across every department', 'Mismatches between quote and purchase order caught before work starts'],
+    links: []
+  }
+];
+
+/* ------------------------------------------------------------------ helpers */
+const $ = (id) => document.getElementById(id);
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait = (ms) => new Promise((r) => setTimeout(r, REDUCED ? 0 : ms));
+const SVGNS = 'http://www.w3.org/2000/svg';
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) { if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c)); }
+  return e;
+}
+function sv(tag, attrs) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v);
+  return e;
+}
+function seeded(seed) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const money = (n) => '$' + Math.round(n).toLocaleString('en-CA');
+function largestRemainder(values) {
+  const total = values.reduce((a, b) => a + b, 0);
+  if (!total) return values.map(() => 0);
+  const raw = values.map((v) => v / total * 100);
+  const fl = raw.map(Math.floor);
+  let left = 100 - fl.reduce((a, b) => a + b, 0);
+  raw.map((r, i) => [r - fl[i], i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (left > 0) { fl[i]++; left--; } });
+  return fl;
+}
+
+/* ------------------------------------------------------------------ theme */
+(function theme() {
+  const btn = $('theme');
+  const current = () => document.documentElement.getAttribute('data-theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const sync = () => { btn.textContent = current() === 'dark' ? 'Paper view' : 'Blueprint view'; };
+  btn.addEventListener('click', () => {
+    const t = current() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('theme', t); } catch (e) {}
+    sync();
+  });
+  sync();
+})();
+
+/* ------------------------------------------------------------------ tabs */
+const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+function selectTab(id, focus) {
+  tabs.forEach((t) => {
+    const on = t.id === id;
+    t.setAttribute('aria-selected', on ? 'true' : 'false');
+    t.tabIndex = on ? 0 : -1;
+    $(t.getAttribute('aria-controls')).hidden = !on;
+    if (on && focus) t.focus();
+  });
+}
+tabs.forEach((t, i) => {
+  t.addEventListener('click', () => selectTab(t.id));
+  t.addEventListener('keydown', (e) => {
+    let j = null;
+    if (e.key === 'ArrowRight') j = (i + 1) % tabs.length;
+    if (e.key === 'ArrowLeft') j = (i - 1 + tabs.length) % tabs.length;
+    if (e.key === 'Home') j = 0;
+    if (e.key === 'End') j = tabs.length - 1;
+    if (j != null) { e.preventDefault(); selectTab(tabs[j].id, true); }
+  });
+});
+function openDemo(tabId) {
+  selectTab(tabId);
+  $('try').scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' });
+}
+
+/* ------------------------------------------------------------------ register */
+(function register() {
+  const reg = $('register');
+  const filters = $('filters');
+  const countEl = $('reg-count');
+  const counts = {};
+  TOOLS.forEach((t) => t.stack.forEach((s) => { counts[s] = (counts[s] || 0) + 1; }));
+  const stacks = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+  let active = 'All';
+
+  filters.append(h('span', { class: 'lbl' }, 'Built with'));
+  ['All', ...stacks].forEach((s) => {
+    filters.append(h('button', {
+      class: 'chip', type: 'button', 'aria-pressed': s === 'All' ? 'true' : 'false', 'data-stack': s,
+      onclick: () => { active = s; apply(); }
+    }, s));
+  });
+
+  const rows = TOOLS.map((t, i) => {
+    const bodyId = 'tool-body-' + i;
+    const head = h('button', { class: 'tool-head', type: 'button', 'aria-expanded': 'false', 'aria-controls': bodyId },
+      h('span', { class: 'tool-main' }, h('span', { class: 'tool-name' }, t.name), h('span', { class: 'tool-sum' }, t.summary)),
+      h('span', { class: 'tool-status' }, t.status),
+      h('span', { class: 'tags' }, t.stack.map((s) => h('span', { class: 'tag' }, s))),
+      h('span', { class: 'chev', 'aria-hidden': 'true' })
+    );
+    const links = (t.links || []).map((l) => l.tab
+      ? h('button', { class: 'linklike', type: 'button', style: 'font-weight:600', onclick: () => openDemo(l.tab) }, l.label)
+      : h('a', { href: l.href }, l.label));
+    const body = h('div', { class: 'tool-body', id: bodyId, hidden: true },
+      h('div', {},
+        h('h3', {}, 'The problem'), h('p', {}, t.problem),
+        h('h3', {}, 'What I built'), h('p', {}, t.built)
+      ),
+      h('div', {}, h('h3', {}, 'How it works'), h('ol', { class: 'flow' }, t.steps.map((s) => h('li', {}, s)))),
+      h('div', {},
+        h('h3', {}, 'What changed'),
+        h('ul', { class: 'results' }, t.results.map((r) => h('li', {}, r))),
+        links.length ? h('div', { class: 'tool-links' }, links) : null
+      )
+    );
+    head.addEventListener('click', () => {
+      const open = head.getAttribute('aria-expanded') === 'true';
+      head.setAttribute('aria-expanded', open ? 'false' : 'true');
+      body.hidden = open;
+    });
+    const row = h('article', { class: 'tool' }, head, body);
+    reg.append(row);
+    return { row, tool: t };
+  });
+
+  function apply() {
+    filters.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.dataset.stack === active ? 'true' : 'false'));
+    let shown = 0;
+    rows.forEach(({ row, tool }) => {
+      const on = active === 'All' || tool.stack.includes(active);
+      row.hidden = !on;
+      if (on) shown++;
+    });
+    countEl.textContent = active === 'All'
+      ? TOOLS.length + ' tools.'
+      : 'Showing ' + shown + ' of ' + TOOLS.length + ' tools built with ' + active + '.';
+  }
+  // Open the first row so the page shows what a case study looks like.
+  rows[0].row.querySelector('.tool-head').click();
+  apply();
+})();
+
+/* ------------------------------------------------------------------ packet printer */
+(function packetPrinter() {
+  const STATIONS = ['Bundle shop', 'Welding shop 1', 'Welding shop 2', 'Shop foreman', 'Machine shop', 'Prep shop'];
+  const STEPS = [
+    'Outlook raises the new-mail event',
+    'Check sender, subject keyword and job number',
+    'Save attachments and sort by document type',
+    'Print letter and ledger sets',
+    'Build and print the sign-off sheet',
+    'File the run and tag the email'
+  ];
+  const DRAWINGS = ['BS.pdf', 'TS.pdf', 'CH.pdf', 'NZ.pdf', 'SF.pdf'];
+  const CASES = {
+    normal: {
+      label: 'IFC email', from: 'Document Control', subject: 'IFC: Job 31-0042, cooler bundle',
+      files: ['DRC.pdf'].concat(DRAWINGS), drc: true, print: true,
+      out: [
+        ['done', 'New message from Document Control.'],
+        ['done', 'Sender is on the allow list. One job number, 31-0042.'],
+        ['done', 'Found the drawing register and 5 drawings.'],
+        ['done', '12 print jobs, 6 stations, 2 printers.'],
+        ['done', 'Filled from the drawing register. Goes to the shop foreman.'],
+        ['done', 'Tagged printed. Manifest saved with the run.']
+      ],
+      result: ['Printed. 13 print jobs on 2 printers, nobody involved.', false]
+    },
+    reply: {
+      label: 'A reply to it', from: 'A colleague on the allow list', subject: 'RE: IFC: Job 31-0042, cooler bundle',
+      files: ['DRC.pdf'].concat(DRAWINGS), drc: true, print: false,
+      out: [
+        ['done', 'New message.'],
+        ['fail', 'Subject starts with RE:. A reply keeps the subject and the attachments, so printing it would reprint the whole package.'],
+        ['skip', ''], ['skip', ''], ['skip', ''],
+        ['done', 'Left in the inbox untouched.']
+      ],
+      result: ['Refused on purpose. Nothing printed.', false]
+    },
+    dated: {
+      label: 'Dated file names', from: 'Document Control', subject: 'IFC: Job 31-0057, exchanger shell',
+      files: ['DRC.pdf', 'BS - Sept 11-2026.pdf', 'TS.pdf', 'CH.pdf', 'NZ.pdf', 'SF.pdf'], drc: true, print: true,
+      out: [
+        ['done', 'New message from Document Control.'],
+        ['done', 'Sender is on the allow list. One job number, 31-0057.'],
+        ['done', 'Matched "BS - Sept 11-2026.pdf" as BS. A date after the code is allowed, but SFA.pdf still won’t match SF.'],
+        ['done', '12 print jobs, 6 stations, 2 printers.'],
+        ['done', 'Filled from the drawing register.'],
+        ['done', 'Tagged printed.']
+      ],
+      result: ['Printed. 13 print jobs on 2 printers.', false]
+    },
+    nodrc: {
+      label: 'No drawing register', from: 'Document Control', subject: 'IFC: Job 31-0063, channel cover',
+      files: DRAWINGS.slice(), drc: false, print: true,
+      out: [
+        ['done', 'New message from Document Control.'],
+        ['done', 'Sender is on the allow list. One job number, 31-0063.'],
+        ['done', 'No drawing register attached. The 5 drawings still print.'],
+        ['done', '6 print jobs, ledger sets only.'],
+        ['skip', 'Needs the drawing register. Skipped, not failed.'],
+        ['done', 'Tagged printed, partial. The reason is in the manifest.']
+      ],
+      result: ['Printed, partial. 6 print jobs. The missing register is flagged.', true]
+    }
+  };
+  let current = 'normal';
+  let token = 0;
+  const casesEl = $('run-cases');
+  Object.entries(CASES).forEach(([k, c]) => {
+    casesEl.append(h('button', { type: 'button', 'aria-pressed': k === current ? 'true' : 'false', 'data-k': k,
+      onclick: () => { current = k; casesEl.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.k === k ? 'true' : 'false')); reset(); } }, c.label));
+  });
+
+  const stepsEl = $('run-steps');
+  const stationsEl = $('run-stations');
+  const resultEl = $('run-result');
+  const piles = STATIONS.map((s) => {
+    const pile = h('span', { class: 'pile' });
+    stationsEl.append(h('div', { class: 'tray' }, h('div', { class: 'nm' }, s), pile));
+    return pile;
+  });
+
+  function reset() {
+    token++;
+    const c = CASES[current];
+    const mail = $('run-mail');
+    mail.replaceChildren(
+      h('div', { class: 'from' }, 'From: ' + c.from),
+      h('div', { class: 'subj' }, c.subject),
+      h('div', { class: 'files' }, c.files.map((f) => h('span', { class: 'file' }, f)))
+    );
+    stepsEl.replaceChildren(...STEPS.map((s) => h('li', {}, h('span', { class: 'ic', 'aria-hidden': 'true' }), h('span', {}, s, h('span', { class: 'step-note' })))));
+    piles.forEach((p) => p.replaceChildren());
+    resultEl.textContent = '';
+    resultEl.style.color = '';
+  }
+
+  async function run() {
+    reset();
+    const my = token;
+    const c = CASES[current];
+    const items = Array.from(stepsEl.children);
+    for (let i = 0; i < STEPS.length; i++) {
+      if (my !== token) return;
+      const li = items[i];
+      li.className = 'active';
+      await wait(520);
+      if (my !== token) return;
+      const [state, note] = c.out[i];
+      li.className = state;
+      li.querySelector('.ic').textContent = state === 'done' ? '✓' : state === 'fail' ? '✕' : '';
+      li.querySelector('.step-note').textContent = note;
+      if (i === 3 && c.print) {
+        for (let s = 0; s < STATIONS.length; s++) {
+          if (my !== token) return;
+          if (c.drc) piles[s].append(h('i', { title: 'Drawing register, letter' }));
+          for (let d = 0; d < DRAWINGS.length; d++) piles[s].append(h('i', { class: 'ledger', title: 'Drawing, ledger' }));
+          await wait(110);
+        }
+      }
+      if (i === 4 && c.print && c.drc) piles[3].prepend(h('i', { class: 'signoff', title: 'Sign-off sheet' }));
+    }
+    resultEl.textContent = c.result[0];
+    resultEl.style.color = c.result[1] ? 'var(--red)' : '';
+  }
+
+  $('run-btn').addEventListener('click', run);
+  reset();
+  // One orchestrated moment on load. Reduced motion gets the finished state at once.
+  setTimeout(run, REDUCED ? 0 : 700);
+})();
+
+/* ------------------------------------------------------------------ document follow-up demo */
+(function followUps() {
+  const TODAY = new Date(2026, 9, 15);
+  const R = seeded(11);
+  const pick = (arr) => arr[Math.floor(R() * arr.length)];
+  const JOBS = [
+    ['31-0101', 'Northfield Energy'], ['31-0104', 'Prairie Midstream'], ['31-0109', 'Kestrel Refining'],
+    ['31-0112', 'Northfield Energy'], ['31-0118', 'Bowline Chemicals'], ['31-0121', 'Prairie Midstream'],
+    ['31-0127', 'Kestrel Refining'], ['31-0133', 'Bowline Chemicals']
+  ];
+  const TITLES = ['General arrangement', 'Inspection and test plan', 'Weld map', 'Tubesheet layout', 'Nameplate drawing',
+    'Hydrotest procedure', 'Bill of material', 'Nozzle orientation', 'Design calculations', 'Painting procedure'];
+  const docs = [];
+  let trn = 11;
+  JOBS.forEach(([job, client], j) => {
+    const nT = 1 + Math.floor(R() * 3);
+    for (let t = 0; t < nT; t++) {
+      const age = Math.floor(Math.pow(R(), 1.5) * 44);
+      const name = 'TRN-0' + (trn++);
+      const n = 1 + Math.floor(R() * 3);
+      for (let k = 0; k < n; k++) docs.push({ job, client, trn: name, lane: 0, age, title: pick(TITLES), rev: pick(['A', 'B', '0', '1']) });
+    }
+    if (R() < 0.75) {
+      const age = Math.floor(R() * 16);
+      const n = 1 + Math.floor(R() * 2);
+      for (let k = 0; k < n; k++) docs.push({ job, client, lane: 1, code: 'Code 2', age, title: pick(TITLES), rev: pick(['A', 'B', '0']) });
+    }
+    if (R() < 0.45) docs.push({ job, client, lane: 2, code: 'Code 2', age: Math.floor(R() * 12), title: pick(TITLES), rev: pick(['B', 'C', '1']) });
+    if (j === 2 || j === 6) docs.push({ job, client, lane: 1, code: 'Code 3', stop: true, age: 2 + Math.floor(R() * 5), title: pick(TITLES), rev: '0' });
+  });
+  docs.forEach((d) => { d.jit = (R() - 0.5) * 26; });
+
+  const LANES = ['With the client', 'Returned with comments', 'Revision in review'];
+  const MAXD = 45;
+  const chartEl = $('dc-chart');
+  const tip = h('div', { class: 'tip', hidden: true });
+  // Two layouts: lane names beside the lanes on wide screens, above them on phones.
+  const LAYOUTS = {
+    wide: { W: 760, H: 250, X0: 168, X1: 740, laneY: [50, 120, 190], labelX: 0, labelDy: 4, step: 5, tickY: 228, tickTextY: 244, titleY: 244, titleAnchor: 'start' },
+    narrow: { W: 360, H: 336, X0: 12, X1: 344, laneY: [62, 160, 258], labelX: 0, labelDy: -38, step: 10, tickY: 296, tickTextY: 312, titleY: 332, titleAnchor: 'start' }
+  };
+  let L = null, thrG = null, marks = [];
+  const xs = (d) => L.X0 + Math.min(d, MAXD) / MAXD * (L.X1 - L.X0);
+
+  function buildChart() {
+    const key = chartEl.clientWidth < 620 ? 'narrow' : 'wide';
+    if (L && L.key === key) return false;
+    L = Object.assign({ key }, LAYOUTS[key]);
+    const svg = sv('svg', { viewBox: `0 0 ${L.W} ${L.H}`, role: 'img', 'aria-label': 'Documents by business days waiting, in three stages. The follow-up lists below carry the same information.' });
+    LANES.forEach((name, i) => {
+      svg.append(sv('line', { class: 'lane-rule', x1: L.X0, x2: L.X1, y1: L.laneY[i] + 32, y2: L.laneY[i] + 32 }));
+      const t = sv('text', { class: 'lane-label', x: L.labelX, y: L.laneY[i] + L.labelDy });
+      t.textContent = name;
+      svg.append(t);
+    });
+    const axis = sv('g', { class: 'axis' });
+    for (let d = 0; d <= MAXD; d += L.step) {
+      axis.append(sv('line', { x1: xs(d), x2: xs(d), y1: L.tickY, y2: L.tickY + 4 }));
+      const t = sv('text', { x: xs(d), y: L.tickTextY, 'text-anchor': 'middle' });
+      t.textContent = String(d);
+      axis.append(t);
+    }
+    const end = sv('text', { x: xs(MAXD), y: L.tickTextY, 'text-anchor': 'middle' });
+    end.textContent = '45+';
+    if (L.step !== 5) axis.append(end); else axis.lastChild.textContent = '45+';
+    const axT = sv('text', { x: 0, y: L.titleY, 'text-anchor': L.titleAnchor });
+    axT.textContent = 'Business days waiting';
+    axis.append(axT);
+    svg.append(axis);
+    thrG = sv('g', {});
+    svg.append(thrG);
+    const dotG = sv('g', {});
+    svg.append(dotG);
+    marks = docs.map((d) => {
+      const cx = xs(d.age), cy = L.laneY[d.lane] + d.jit;
+      const g = sv('g', {});
+      const hit = sv('circle', { class: 'hit', cx, cy, r: 11 });
+      const mark = d.stop
+        ? sv('path', { class: 'dot', d: `M${cx} ${cy - 7} L${cx + 7} ${cy} L${cx} ${cy + 7} L${cx - 7} ${cy}Z` })
+        : sv('circle', { class: 'dot', cx, cy, r: 5 });
+      g.append(hit, mark);
+      dotG.append(g);
+      const where = d.lane === 0 ? `with the client on ${d.trn}` : d.lane === 1 ? `since it came back ${d.code}${d.stop ? ', stop work' : ''}` : 'in internal review';
+      const text = `Job ${d.job}, ${d.title} rev ${d.rev}. ${d.age} business days ${where}.`;
+      const show = () => {
+        mark.classList.add('hot');
+        tip.textContent = text;
+        const sc = svg.getBoundingClientRect().width / L.W;
+        tip.style.left = Math.max(120, Math.min(chartEl.clientWidth - 120, cx * sc)) + 'px';
+        tip.style.top = (cy * sc) + 'px';
+        tip.hidden = false;
+      };
+      hit.addEventListener('mouseenter', show);
+      hit.addEventListener('mouseleave', () => { mark.classList.remove('hot'); tip.hidden = true; });
+      return { d, mark };
+    });
+    chartEl.replaceChildren(svg, tip);
+    return true;
+  }
+
+  function bdBefore(n) {
+    const d = new Date(TODAY);
+    let k = 0;
+    while (k < n) { d.setDate(d.getDate() - 1); const w = d.getDay(); if (w !== 0 && w !== 6) k++; }
+    return d.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' });
+  }
+
+  function cardList(el, cards, kind) {
+    el.replaceChildren();
+    if (!cards.length) { el.append(h('p', { class: 'empty' }, 'Nothing overdue at this limit.')); return; }
+    cards.slice(0, 5).forEach((c) => {
+      const pre = h('pre', { hidden: true }, c.email);
+      const btn = h('button', { class: 'linklike', type: 'button', 'aria-expanded': 'false' }, 'Show the email');
+      btn.addEventListener('click', () => {
+        const open = !pre.hidden;
+        pre.hidden = open;
+        btn.textContent = open ? 'Show the email' : 'Hide the email';
+        btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+      });
+      el.append(h('div', { class: 'fcard' },
+        h('div', { class: 't' }, c.title),
+        h('div', { class: 'meta' }, c.meta),
+        h('div', { class: 'age' }, c.age),
+        btn, pre));
+    });
+    if (cards.length > 5) el.append(h('p', { class: 'more' }, 'And ' + (cards.length - 5) + ' more ' + kind + '.'));
+  }
+
+  function render() {
+    if (!L) buildChart();
+    const cT = +$('dc-client').value || 14;
+    const iT = +$('dc-int').value || 5;
+    thrG.replaceChildren();
+    [[0, cT], [1, iT], [2, iT]].forEach(([lane, t]) => {
+      const x = xs(t);
+      thrG.append(sv('line', { class: 'thr', x1: x, x2: x, y1: L.laneY[lane] - 24, y2: L.laneY[lane] + 24 }));
+      const lab = sv('text', { class: 'thr-label', x: x + 4, y: L.laneY[lane] - 16 });
+      lab.textContent = 'Limit ' + t;
+      thrG.append(lab);
+    });
+    marks.forEach(({ d, mark }) => {
+      const over = d.stop || d.age >= (d.lane === 0 ? cT : iT);
+      mark.classList.toggle('over', over);
+    });
+
+    const groups = new Map();
+    docs.forEach((d) => {
+      const key = d.lane === 0 ? 'c|' + d.job + '|' + d.trn : 'i|' + d.job + '|' + d.lane + '|' + (d.code || '');
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(d);
+    });
+    const client = [], internal = [];
+    groups.forEach((list, key) => {
+      const d0 = list[0];
+      const age = Math.max(...list.map((d) => d.age));
+      const stop = list.some((d) => d.stop);
+      const isClient = key[0] === 'c';
+      if (!(stop || age >= (isClient ? cT : iT))) return;
+      const docsTxt = list.map((d) => '  - ' + d.title + ', rev ' + d.rev).join('\n');
+      if (isClient) {
+        client.push({
+          title: 'Job ' + d0.job + ', ' + d0.trn,
+          meta: d0.client + '. ' + list.length + (list.length > 1 ? ' documents.' : ' document.'),
+          age: age + ' business days with the client',
+          email: 'Subject: Follow-up on outstanding documents, Job ' + d0.job + ', ' + d0.trn + '\n\nHello,\n\n' + d0.trn + ' went to you on ' + bdBefore(age) + ' with ' + list.length + (list.length > 1 ? ' documents' : ' document') + '. We don’t have ' + (list.length > 1 ? 'them' : 'it') + ' back yet.\n\n' + docsTxt + '\n\nCould you confirm the expected return date? If ' + (list.length > 1 ? 'they’re' : 'it’s') + ' already back, let us know and we’ll update our records.\n\nThank you,',
+          sort: age
+        });
+      } else {
+        const stage = d0.lane === 1 ? 'returned ' + d0.code + (stop ? ', stop work' : '') : 'revision in review';
+        internal.push({
+          title: 'Job ' + d0.job + ', ' + stage,
+          meta: list.length + (list.length > 1 ? ' documents. ' : ' document. ') + (d0.lane === 1 ? 'Engineering owes a revision.' : 'Waiting on internal review.'),
+          age: stop ? 'Stop work, flagged at any age. ' + age + ' business days since it came back.' : age + ' business days ' + (d0.lane === 1 ? 'since it came back' : 'in review'),
+          email: 'Subject: Internal: ' + (d0.lane === 1 ? 'revision required' : 'review needed') + ', Job ' + d0.job + (d0.code ? ', ' + d0.code : '') + '\n\nHi,\n\n' + (d0.lane === 1 ? 'The client returned ' + (list.length > 1 ? 'these' : 'this') + ' ' + d0.code + ' on ' + bdBefore(age) + (stop ? '. It’s a stop work, so fabrication on it is on hold.' : '.') : (list.length > 1 ? 'These revisions have' : 'This revision has') + ' been in internal review since ' + bdBefore(age) + '.') + '\n\n' + docsTxt + '\n\nCould you confirm when the revision will be ready to issue?\n\nThank you,',
+          sort: stop ? 1000 + age : age
+        });
+      }
+    });
+    client.sort((a, b) => b.sort - a.sort);
+    internal.sort((a, b) => b.sort - a.sort);
+    const nDocsOver = marks.filter((m) => m.mark.classList.contains('over')).length;
+    $('dc-summary').innerHTML = '';
+    $('dc-summary').append(
+      h('strong', {}, client.length + ' client follow-ups'), ' and ',
+      h('strong', {}, internal.length + ' internal'), ' at these limits, covering ' + nDocsOver + ' of ' + docs.length + ' documents.'
+    );
+    cardList($('dc-client-cards'), client, 'client follow-ups');
+    cardList($('dc-int-cards'), internal, 'internal follow-ups');
+  }
+
+  [['dc-client', 'dc-client-r'], ['dc-int', 'dc-int-r']].forEach(([n, r]) => {
+    const num = $(n), rng = $(r);
+    const clamp = (v) => Math.max(+num.min, Math.min(+num.max, Math.round(+v || +num.min)));
+    rng.addEventListener('input', () => { num.value = rng.value; render(); });
+    num.addEventListener('input', () => { if (num.value === '') return; rng.value = clamp(num.value); render(); });
+    num.addEventListener('change', () => { num.value = clamp(num.value); rng.value = num.value; render(); });
+  });
+  render();
+  if ('ResizeObserver' in window) new ResizeObserver(() => { if (buildChart()) render(); }).observe(chartEl);
+})();
+
+/* ------------------------------------------------------------------ overtime demo */
+(function overtime() {
+  const DAYS = ['Fri', 'Sat', 'Sun'];
+  const HRS = 12;
+  const dt = [false, false, false];
+  const LINES = [
+    { job: '31-0211', client: 'Northfield Energy', trade: 'Welder', workers: 2, shifts: [true, true, false], old: true, reason: 'maintain' },
+    { job: '31-0214', client: 'Northfield Energy', trade: 'Fitter', workers: 1, shifts: [false, true, true], old: true, reason: 'maintain' },
+    { job: '31-0230', client: 'Prairie Midstream', trade: 'Machinist', workers: 1, shifts: [true, true, false], old: true, reason: 'minimize' },
+    { job: '31-0242', client: 'Kestrel Refining', trade: 'Labour', workers: 2, shifts: [false, true, false], old: false, reason: 'dropin' },
+    { job: '31-0251', client: 'Kestrel Refining', trade: 'Welder', workers: 1, shifts: [true, false, false], old: false, reason: 'maintain' }
+  ];
+  const table = $('ot-table');
+
+  function build() {
+    const head = h('thead', {}, h('tr', {},
+      h('th', { scope: 'col' }, 'Job and trade'),
+      h('th', { scope: 'col' }, 'People'),
+      DAYS.map((d, i) => h('th', { scope: 'col', class: 'daycol' }, d, h('br'),
+        h('label', { class: 'dtbox' }, h('input', { type: 'checkbox', 'aria-label': d + ' is double time', onchange: (e) => { dt[i] = e.target.checked; render(); } }), 'DT')))
+    ));
+    const body = h('tbody', {}, LINES.map((l) => h('tr', {},
+      h('td', {}, h('span', { class: 'job' }, l.job), ' ', l.trade, h('span', { class: 'client' }, l.client)),
+      h('td', {}, h('input', { class: 'num', type: 'number', min: 0, max: 9, value: l.workers, style: 'width:50px', 'aria-label': l.job + ' ' + l.trade + ' headcount',
+        oninput: (e) => { l.workers = Math.max(0, Math.min(9, Math.round(+e.target.value || 0))); render(); } })),
+      DAYS.map((d, i) => h('td', { class: 'daycol' }, h('button', { class: 'shift', type: 'button', 'aria-pressed': l.shifts[i] ? 'true' : 'false', 'aria-label': l.job + ' ' + l.trade + ', ' + d + ' day shift',
+        onclick: (e) => { l.shifts[i] = !l.shifts[i]; e.currentTarget.setAttribute('aria-pressed', l.shifts[i] ? 'true' : 'false'); render(); } }, 'D')))
+    )));
+    table.append(head, body);
+    $('ot-rate').addEventListener('input', render);
+    $('ot-old').addEventListener('change', render);
+  }
+
+  function compute() {
+    const rate = Math.max(0, +$('ot-rate').value || 0);
+    const lines = LINES.map((l) => {
+      let pd = 0, hrs = 0, dtHrs = 0;
+      const sh = [];
+      l.shifts.forEach((on, i) => {
+        if (!on || !l.workers) return;
+        pd += l.workers; hrs += l.workers * HRS;
+        if (dt[i]) dtHrs += l.workers * HRS;
+        sh.push({ day: i, w: l.workers, dt: dt[i] });
+      });
+      const budget = rate * hrs * 0.5, dtc = rate * dtHrs * 0.5;
+      return { ...l, pd, hrs, dtHrs, budget, dtc, total: budget + dtc, sh };
+    }).filter((l) => l.pd > 0);
+    const trades = [];
+    lines.forEach((l) => {
+      let t = trades.find((x) => x.name === l.trade);
+      if (!t) { t = { name: l.trade, lines: [] }; trades.push(t); }
+      t.lines.push(l);
+    });
+    trades.forEach((t) => {
+      const per = [0, 0, 0];
+      t.lines.forEach((l) => l.sh.forEach((s) => { per[s.day] += s.w; }));
+      t.breakdown = per.map((w, i) => w ? w + '/' + DAYS[i] + '-D' : '').filter(Boolean).join(' + ');
+      t.pd = t.lines.reduce((a, l) => a + l.pd, 0);
+      t.hrs = t.lines.reduce((a, l) => a + l.hrs, 0);
+      t.dtHrs = t.lines.reduce((a, l) => a + l.dtHrs, 0);
+      t.budget = t.lines.reduce((a, l) => a + l.budget, 0);
+      t.dtc = t.lines.reduce((a, l) => a + l.dtc, 0);
+    });
+    const budget = lines.reduce((a, l) => a + l.budget, 0);
+    const dtc = lines.reduce((a, l) => a + l.dtc, 0);
+    const split = (subset) => {
+      const m = new Map();
+      subset.forEach((l) => m.set(l.client, (m.get(l.client) || 0) + l.total));
+      const arr = Array.from(m, ([name, amt]) => ({ name, amt })).sort((a, b) => b.amt - a.amt);
+      const pct = largestRemainder(arr.map((c) => c.amt));
+      arr.forEach((c, i) => { c.pct = pct[i]; });
+      return arr;
+    };
+    return { rate, lines, trades, budget, dtc, grand: budget + dtc, clients: split(lines), old: split(lines.filter((l) => l.old)) };
+  }
+
+  const letter = (i) => String.fromCharCode(97 + i);
+  const REASON = { maintain: 'in order to maintain RTS date', minimize: 'in order to minimize impact to RTS date', dropin: 'for drop-in work' };
+
+  function email(C) {
+    if (!C.lines.length) return 'Toggle a shift to start the request.';
+    const L = [];
+    const usedDays = DAYS.filter((d, i) => C.lines.some((l) => l.sh.some((s) => s.day === i)));
+    const period = usedDays.length > 1 ? usedDays[0] + ' to ' + usedDays[usedDays.length - 1] : usedDays[0];
+    const dtDays = DAYS.filter((d, i) => dt[i] && usedDays.includes(d));
+    L.push('Hello,', '');
+    L.push('Approval requested for the following overtime effort (' + period + '). Shift lengths: 12-hr. ' +
+      (dtDays.length ? dtDays.join(', ') + (dtDays.length > 1 ? ' are' : ' is') + ' double time.' : 'No double-time days.'), '');
+    C.trades.forEach((t, ti) => {
+      if (ti) L.push('');
+      L.push((ti + 1) + '. ' + t.name + ' = ' + t.pd + '-persondays total (' + t.breakdown + '):');
+      let i = 0;
+      t.lines.forEach((l) => {
+        let s = l.client + ' (' + l.job + ')';
+        if (t.lines.length > 1) s += ' ' + l.sh.map((x) => x.w + '/' + DAYS[x.day] + '-D').join(' + ');
+        const dts = l.sh.filter((x) => x.dt).map((x) => DAYS[x.day] + '-D');
+        if (dts.length) s += ', DOUBLE TIME on ' + dts.join(', ') + ',';
+        s += ' requested ' + REASON[l.reason] + ',';
+        L.push('   ' + letter(i++) + '. ' + s);
+      });
+      L.push('   ' + letter(i++) + '. Budget incremental cost = $' + C.rate + '/hr x ' + t.hrs + '-hr x (1.5 - 1.0) = ' + money(t.budget) + '-total,');
+      L.push('   ' + letter(i++) + '. Additional incremental cost for DT = ' + (t.dtHrs ? '$' + C.rate + '/hr x ' + t.dtHrs + '-hr x (2.0 - 1.5) = ' + money(t.dtc) + '-total.' : 'nil.'));
+    });
+    L.push('', (C.trades.length + 1) + '. Total incremental cost = ' + money(C.budget) + ' + ' + money(C.dtc) + ' (DT) = ' + money(C.grand) + ':');
+    C.clients.forEach((c, i) => L.push('   ' + letter(i) + '. ' + c.name + ' = ' + money(c.amt) + ' = ' + c.pct + '% of total' + (i === C.clients.length - 1 ? '.' : ',')));
+    L.push('', 'Please advise.', '', 'Thank you,');
+    return L.join('\n');
+  }
+
+  function bars(list, max, cls) {
+    return h('div', { class: 'split' }, list.map((c) => h('div', { class: 'bar-row' },
+      h('span', {}, c.name),
+      h('span', { class: 'bar' + (cls ? ' ' + cls : ''), role: 'img', 'aria-label': c.name + ', ' + money(c.amt) + ', ' + c.pct + ' percent' },
+        h('span', { style: 'width:' + (max ? c.amt / max * 100 : 0) + '%' })),
+      h('span', { class: 'v' }, money(c.amt) + ' ' + c.pct + '%')
+    )));
+  }
+
+  function render() {
+    const C = compute();
+    $('ot-email').textContent = email(C);
+    const box = $('ot-split');
+    box.replaceChildren();
+    if (!C.lines.length) { box.append(h('p', { class: 'empty' }, 'No shifts selected.')); return; }
+    const max = Math.max(...C.clients.map((c) => c.amt));
+    const showOld = $('ot-old').checked;
+    if (showOld) box.append(h('p', { class: 'split-cap' }, 'This tool, every job counted'));
+    box.append(bars(C.clients, max));
+    if (showOld) {
+      const oldTotal = C.old.reduce((a, c) => a + c.amt, 0);
+      const missing = C.grand - oldTotal;
+      box.append(h('p', { class: 'split-cap' }, 'Old spreadsheet, only jobs with their own column'));
+      box.append(C.old.length ? bars(C.old, max, 'old') : h('p', { class: 'empty' }, 'No jobs counted.'));
+      box.append(h('p', { class: missing > 0.5 ? 'missing' : 'count-note' }, missing > 0.5
+        ? 'The old split adds up to ' + money(oldTotal) + ' of ' + money(C.grand) + '. ' + money(missing) + ', or ' + Math.round(missing / C.grand * 100) + '% of the week, is missing.'
+        : 'With these shifts both splits agree. Turn on a Kestrel Refining shift to see the gap.'));
+    }
+  }
+  build();
+  render();
+})();
+
+/* ------------------------------------------------------------------ tube sample demo */
+(function tubes() {
+  const C = 210, RAD = 192, LIMIT = 182, PITCH = 15, ROWGAP = PITCH * Math.sin(Math.PI / 3), LANE = 10, HOLE = 5.2;
+  const rows = [];
+  const ys = [];
+  for (let k = 0; ; k++) { const y = C - LANE - k * ROWGAP; if (C - y > LIMIT - HOLE) break; ys.unshift(y); }
+  for (let k = 0; ; k++) { const y = C + LANE + k * ROWGAP; if (y - C > LIMIT - HOLE) break; ys.push(y); }
+  ys.forEach((y, r) => {
+    const off = (r % 2) * PITCH / 2;
+    const xs = [];
+    for (let x = C - LIMIT + off; x <= C + LIMIT; x += PITCH) {
+      if (Math.hypot(x - C, y - C) <= LIMIT - HOLE) xs.push(x);
+    }
+    rows.push(xs.map((x) => ({ x, y })));
+  });
+  const all = [];
+  rows.forEach((row, r) => row.forEach((p, i) => all.push({ ...p, r: r + 1, i: i + 1 })));
+
+  const svg = sv('svg', { class: 'tubesheet', viewBox: '-14 0 434 420', role: 'img', 'aria-label': 'Tubesheet layout with ' + all.length + ' tube holes. Sampled holes are filled.' });
+  svg.append(sv('circle', { class: 'shell', cx: C, cy: C, r: RAD }));
+  svg.append(sv('line', { class: 'lane', x1: C - RAD + 6, x2: C + RAD - 6, y1: C, y2: C }));
+  rows.forEach((row, r) => {
+    if (r % 5 === 0 || r === rows.length - 1) {
+      const t = sv('text', { class: 'rowno', x: C - RAD - 8, y: row[0].y + 3, 'text-anchor': 'end' });
+      svg.append(sv('line', { class: 'lane', x1: C - RAD - 5, x2: row[0].x - HOLE - 2, y1: row[0].y, y2: row[0].y }));
+      t.textContent = 'R' + (r + 1);
+      svg.append(t);
+    }
+  });
+  const holeEls = all.map((p) => {
+    const c = sv('circle', { class: 'hole', cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: HOLE });
+    c.dataset.loc = 'R' + p.r + 'H' + p.i;
+    svg.append(c);
+    return c;
+  });
+  const ring = sv('circle', { class: 'ring', r: HOLE + 4, cx: 0, cy: 0, visibility: 'hidden' });
+  svg.append(ring);
+  $('tube-svg').append(svg);
+
+  const readout = $('tube-readout');
+  svg.addEventListener('mousemove', (e) => { const loc = e.target.dataset && e.target.dataset.loc; if (loc) readout.textContent = loc; });
+  svg.addEventListener('mouseleave', () => { readout.textContent = 'Point at a hole'; });
+
+  let draw = 1;
+  let sample = new Set();
+  function drawSample() {
+    const R = seeded(97 + draw * 31);
+    sample = new Set();
+    const n = Math.round(all.length * 0.10);
+    const block = all.length / n;
+    for (let k = 0; k < n; k++) {
+      const lo = Math.floor(k * block), hi = Math.floor((k + 1) * block);
+      sample.add(lo + Math.floor(R() * Math.max(1, hi - lo)));
+    }
+    holeEls.forEach((el, i) => el.classList.toggle('s', sample.has(i)));
+    const list = $('tube-list');
+    list.replaceChildren(...Array.from(sample).sort((a, b) => a - b).map((i) => h('span', { class: 'loc' }, 'R' + all[i].r + 'H' + all[i].i)));
+    $('tube-count').textContent = sample.size + ' of ' + all.length + ' tubes';
+  }
+  $('tube-draw').addEventListener('click', () => { draw++; drawSample(); check(); });
+
+  const input = $('tube-input');
+  const verdict = $('tube-verdict');
+  function check() {
+    const v = input.value.trim().toUpperCase().replace(/\s+/g, '');
+    if (!v) { verdict.textContent = ''; verdict.className = 'verdict'; ring.setAttribute('visibility', 'hidden'); return; }
+    const m = v.match(/^R(\d{1,3})H(\d{1,3})$/);
+    if (!m) { verdict.textContent = 'Write it as R, the row number, H, the hole number. For example R7H12.'; verdict.className = 'verdict bad'; ring.setAttribute('visibility', 'hidden'); return; }
+    const r = +m[1], i = +m[2];
+    if (r < 1 || r > rows.length) {
+      verdict.textContent = 'There is no row ' + r + '. This layout has ' + rows.length + ' rows.';
+      verdict.className = 'verdict bad'; ring.setAttribute('visibility', 'hidden'); return;
+    }
+    if (i < 1 || i > rows[r - 1].length) {
+      verdict.textContent = 'Row ' + r + ' has ' + rows[r - 1].length + ' holes, so ' + v + ' can’t exist.';
+      verdict.className = 'verdict bad';
+      const last = rows[r - 1][rows[r - 1].length - 1];
+      ring.setAttribute('cx', last.x); ring.setAttribute('cy', last.y); ring.setAttribute('visibility', 'visible');
+      readout.textContent = 'Circled: the last hole in row ' + r + ', R' + r + 'H' + rows[r - 1].length;
+      return;
+    }
+    const p = rows[r - 1][i - 1];
+    ring.setAttribute('cx', p.x); ring.setAttribute('cy', p.y); ring.setAttribute('visibility', 'visible');
+    const idx = all.findIndex((q) => q.r === r && q.i === i);
+    verdict.textContent = v + ' is a real hole' + (sample.has(idx) ? ', and it’s in this sample.' : '. It isn’t in this sample.');
+    verdict.className = 'verdict ok';
+  }
+  $('tube-check').addEventListener('click', check);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') check(); });
+  const badRow = 4;
+  $('tube-bad').addEventListener('click', () => { input.value = 'R' + badRow + 'H' + (rows[badRow - 1].length + 3); check(); });
+  drawSample();
+})();
+</script>
+</body>
+</html>
