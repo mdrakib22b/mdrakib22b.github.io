@@ -12,14 +12,15 @@
   var NS = 'http://www.w3.org/2000/svg';
   var root, svg, cover, eraser, busy = false;
 
-  function arriving() { try { return sessionStorage.getItem(KEY) === '1'; } catch (e) { return false; } }
-  function mark(on) { try { on ? sessionStorage.setItem(KEY, '1') : sessionStorage.removeItem(KEY); } catch (e) {} }
+  // The flag holds the paint colour, so the arriving page wipes away the same colour the leaving page laid down.
+  function arriving() { try { return sessionStorage.getItem(KEY); } catch (e) { return null; } }
+  function mark(color) { try { color ? sessionStorage.setItem(KEY, color) : sessionStorage.removeItem(KEY); } catch (e) {} }
 
-  // Paint in the page's ink: near-white on the dark theme, near-black on the light one.
+  // Paint in the opposite of the page: near-black over a light page, near-white over a dark one.
   function paint() {
-    var t = document.documentElement.getAttribute('data-theme');
-    var dark = t ? t === 'dark' : !(window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches);
-    return dark ? '#F7F8F8' : '#0F1012';
+    var m = getComputedStyle(document.body).backgroundColor.match(/[\d.]+/g) || [255, 255, 255];
+    var light = (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) / 255 > 0.5;
+    return light ? '#0F1012' : '#F7F8F8';
   }
 
   // A zigzag that runs left to right between points well past the top and bottom edges. With a stroke
@@ -39,7 +40,7 @@
     return n;
   }
 
-  function build(covered) {
+  function build(covered, color) {
     var w = innerWidth, h = innerHeight, sw = Math.max(w * 0.34, h * 0.3);
     var stroke = { fill: 'none', 'stroke-width': sw.toFixed(1), 'stroke-linejoin': 'miter', 'stroke-miterlimit': '12', pathLength: '1', 'stroke-dasharray': '1 1' };
 
@@ -59,10 +60,10 @@
     svg.appendChild(defs);
 
     var g = el('g', { mask: 'url(#pt-mask)' });
-    cover = el('path', Object.assign({ d: scribble(w, h, false), stroke: paint(), 'stroke-dashoffset': covered ? '0' : '1' }, stroke));
+    cover = el('path', Object.assign({ d: scribble(w, h, false), stroke: color, 'stroke-dashoffset': covered ? '0' : '1' }, stroke));
     g.appendChild(cover);
     // A solid backing under the stroke once it has finished, so no sliver of the old page can show.
-    var fill = el('rect', { x: 0, y: 0, width: w, height: h, fill: paint(), opacity: covered ? '1' : '0' });
+    var fill = el('rect', { x: 0, y: 0, width: w, height: h, fill: color, opacity: covered ? '1' : '0' });
     g.insertBefore(fill, cover);
     svg.appendChild(g);
     root.appendChild(svg);
@@ -70,7 +71,9 @@
     (document.body || document.documentElement).appendChild(root);
   }
 
-  function teardown() {
+  // Pass the overlay being finished with, so a late timer from an earlier transition can't remove a newer one.
+  function teardown(which) {
+    if (which && which !== root) return;
     if (root) root.remove();
     root = null;
     busy = false;
@@ -79,35 +82,42 @@
   function reveal() {
     root.style.pointerEvents = 'none';
     var a = eraser.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: REVEAL_MS, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
-    a.onfinish = teardown;
-    setTimeout(teardown, REVEAL_MS + 400);
+    var mine = root;
+    a.onfinish = function () { teardown(mine); };
+    setTimeout(function () { teardown(mine); }, REVEAL_MS + 400);
   }
 
   function leave(href) {
     if (busy) return;
     busy = true;
     if (root) root.remove();
-    build(false);
+    root = null;
+    // Open dialogs sit in the top layer, above any z-index, so they would show through the cover.
+    Array.prototype.forEach.call(document.querySelectorAll('dialog[open]'), function (d) { d.close(); });
+    var color = paint();
+    build(false, color);
     root.style.pointerEvents = 'auto';
     cover.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: COVER_MS, easing: 'cubic-bezier(.7,0,.3,1)', fill: 'forwards' });
-    mark(true);
+    mark(color);
     // Navigate on a timer rather than on the animation's finish, which a background tab may never fire.
-    setTimeout(function () { root._fill.setAttribute('opacity', '1'); location.href = href; }, COVER_MS);
+    var mine = root;
+    setTimeout(function () { mine._fill.setAttribute('opacity', '1'); location.href = href; }, COVER_MS);
   }
 
-  if (!ok) { mark(false); return; }
+  if (!ok) { mark(null); return; }
 
   // Arriving from another page of the site: start fully painted, then wipe it away once the page is ready.
-  if (arriving()) {
-    mark(false);
-    build(true);
+  var arrivingColor = arriving();
+  if (arrivingColor) {
+    mark(null);
+    build(true, arrivingColor);
     var go = function () { setTimeout(function () { if (root) reveal(); }, 90); };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go, { once: true });
     else go();
   }
 
   // Back and forward can restore a page from cache with the cover still up; take it down.
-  addEventListener('pageshow', function (e) { if (e.persisted) { mark(false); teardown(); } });
+  addEventListener('pageshow', function (e) { if (e.persisted) { mark(null); teardown(); } });
 
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

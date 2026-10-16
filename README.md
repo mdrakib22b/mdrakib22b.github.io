@@ -6,9 +6,13 @@ Live at https://mdrakib22b.github.io
 
 ## What's here
 
-The main page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu in the header and the footer link to. No build step, no framework, no backend. The only outside request is Google Fonts, and the page still works without it.
+The main page, `index.html`, is a portfolio you talk to, styled after the AI-chat portfolios made with Fastfolio. Visitors land on a question bar and five topics (Me, Projects, Skills, Lessons, Contact). Asking anything switches to a chat view that answers with a card (a project carousel, skill badges, a contact card and so on) and a short reply typed out word by word. There's no AI service behind it: every answer is written in the page, and typed questions are routed to the closest one by keywords, so it works on GitHub Pages, costs nothing and sends nothing anywhere. If nothing matches, it says so and offers suggestions.
 
-`ifc-drawing-packet-printer.html` is a standalone animated walkthrough of how the IFC Drawing packet printer is built, layer by layer with excerpts of its real code. It's linked from the IFC Drawing packet printer's entry in the tools list, under How it works.
+Each answer has its own address, so links like `/#projects`, `/#contact` or `/#printer` open straight to it, and the browser's Back button steps through the conversation. Old section links (`#tools`, `#notes`, `#other`, `#toolbox`) still land on the matching answer.
+
+`Md_Rakib_Resume.pdf` is linked from the top-left pill, the Contact card and the Resume answer. No build step, no framework, no backend. The only outside request is Google Fonts (Geist), and the page still works without it.
+
+`ifc-drawing-packet-printer.html` is a standalone animated walkthrough of how the IFC Drawing packet printer is built, layer by layer with excerpts of its real code. It's linked from that project's card.
 
 `document-follow-up-tracker.html` does the same for the Document follow-up tracker, linked the same way.
 
@@ -16,9 +20,15 @@ The main page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu i
 
 ## Editing
 
-Tool write-ups live in the `TOOLS` array at the top of the script in `index.html`. Each entry has a name, a one-line summary, a `stat` (the headline number shown on the collapsed row), the stack, the problem, steps, results and links, plus an optional `walkthrough` page shown under the steps. Keep each field short: the collapsed rows are what most visitors read.
+Everything the page says lives at the top of the script in `index.html`:
 
-To update the resume, replace `Md_Rakib_Resume.pdf` with a file of the same name. If the size changes much, update the "PDF, 285 KB" note in the Resume menu.
+- `SITE`: name, role, location, LinkedIn and resume links. Set `avatar` to an image path (a square memoji or photo) to replace the MR monogram.
+- `PROJECTS`: one entry per project card, with its colour, headline number (`big` plus `stat`), stack, problem, steps, results and links, plus an optional `walkthrough` page. `keys` are the words that route a typed question to that project.
+- `SKILLS` and `LESSONS`: the Skills and Lessons cards.
+- `TOPICS`: the five topic buttons and the question each one asks. `MORE`: the questions in the "More" drawer.
+- `ANSWERS`: every reply. Each has `keys` (words or phrases that point a typed question at it), a weight `w` (a specific tool beats a general topic), the `card` shown above it and the reply `text`. To teach the page a new question, add an entry here, then try a few phrasings of it.
+
+To update the resume, replace `Md_Rakib_Resume.pdf` with a file of the same name. If the size changes much, update `SITE.resumeNote`.
 
 ## Deploying on GitHub Pages
 
