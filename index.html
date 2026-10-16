@@ -329,7 +329,7 @@ const TOOLS = [
     stat: '5,000+ documents tracked',
     stack: ['Python', 'PowerShell', 'JavaScript', 'Excel', 'Outlook'],
     problem: 'Finding out what a client still had meant reading 300+ Excel job sheets by hand.',
-    steps: ['Parse every job sheet, finding columns by header text', 'Place each document in one of eleven approval stages', 'Draft one follow-up email per overdue batch', 'Rebuild one offline HTML page every hour'],
+    steps: ['Read 300+ job sheets, finding columns by header text so any layout works', 'Place each document in one of eleven approval stages', 'Draft one follow-up email per overdue batch, client or internal', 'Rebuild the dashboard every hour as one offline HTML page'],
     results: ['5,000+ documents across 312 job sheets on one page', '210 client and 80 internal follow-ups in a single run', '98% of transmittals linked to their folders automatically'],
     links: [
       { label: 'Live demo', href: 'https://mdrakib22b.github.io/document-control-tracker/' }
@@ -341,7 +341,7 @@ const TOOLS = [
     stat: '~10–15 min saved per packet',
     stack: ['Python', 'PowerShell', 'VBA', 'Outlook', 'Excel'],
     problem: 'Every packet meant saving, sorting and printing drawings for six shop stations, then a sign-off sheet by hand.',
-    steps: ['New mail wakes an Outlook handler. Nothing polls.', 'Check the sender, subject and job number', 'Sort the PDFs and print sets for six stations', 'Build the sign-off sheet and tag the email'],
+    steps: ['New mail wakes an Outlook handler. Nothing polls.', 'Refuse replies, unknown senders and emails without one clear job number', 'Collect drawings from the email or its shared-drive link and print silently to letter and ledger printers', 'Fill the Excel sign-off sheet from the drawing register, print it and tag the email'],
     results: ['14 packets in its first four weeks', '13 print jobs to 2 printers in 6 minutes on its first live run', 'Each email is claimed once, so nothing prints twice'],
     links: [{ label: 'See how it’s built', href: 'ifc-drawing-packet-printer.html' }]
   },
@@ -351,7 +351,7 @@ const TOOLS = [
     stat: '~80 min a week saved',
     stack: ['JavaScript', 'Python', 'PowerShell', 'Outlook'],
     problem: 'The weekly overtime request was rebuilt by hand from meeting notes, then checked line by line.',
-    steps: ['Enter jobs, trades and shifts during the meeting', 'Cost every line at time and a half and double time', 'Split the total by client', 'Open a ready-to-send Outlook draft'],
+    steps: ['Cost every shift at time and a half or double time', 'Look up each job’s client and split the total by client', 'Open the approval email as a ready-to-send Outlook draft'],
     results: ['About 80 minutes a week of after-meeting work gone (my estimate)', 'Found the old spreadsheet had left 37% of one week’s cost out of the client split', 'Client lookup across 1,442 jobs'],
     links: []
   },
@@ -371,7 +371,7 @@ const TOOLS = [
     stat: '168 records in 2 minutes',
     stack: ['Power Automate', 'Power Fx', 'SharePoint', 'Excel'],
     problem: '168 contracts had to go into a SharePoint form one at a time, thirteen fields each.',
-    steps: ['Clean the source table in Excel', 'Map thirteen fields with Power Fx', 'Test on a small batch, then run it all'],
+    steps: ['Map thirteen fields from the Excel register with Power Fx', 'Power Automate creates one SharePoint list item per row'],
     results: ['168 records in 2 minutes 9 seconds', 'Replaced about a day of form entry', 'Reusable for the next import'],
     links: []
   },
@@ -381,7 +381,7 @@ const TOOLS = [
     stat: '~480 locations no longer typed',
     stack: ['Excel', 'Data validation'],
     problem: 'A 1,612-tube exchanger meant hand-typing about 480 row-and-hole locations into the quality log.',
-    steps: ['Count holes per row from the layout', 'Spread a 10% sample across the tubesheet', 'Check every location against the layout'],
+    steps: ['Spread a 10% sample evenly across every row of the tubesheet', 'Check each row-and-hole location exists in the layout before it reaches the log'],
     results: ['Caught a location that could not exist in a signed reference log', 'Proven on layouts from 351 to 2,393 tubes', 'Quality control runs it on every job'],
     links: []
   }
