@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IFC Drawing Distribution Under the Hood</title>
+<meta name="description" content="How the drawing packet printer is built: Outlook VBA, VBScript, PowerShell, Python and SumatraPDF, shown layer by layer with the real code.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%231E5A8A'/%3E%3Cg fill='%23FBFCFD'%3E%3Ccircle cx='10' cy='12' r='2.2'/%3E%3Ccircle cx='16' cy='12' r='2.2'/%3E%3Ccircle cx='22' cy='12' r='2.2'/%3E%3Ccircle cx='13' cy='20' r='2.2'/%3E%3Ccircle cx='19' cy='20' r='2.2'/%3E%3C/g%3E%3C/svg%3E">
+<script>
+  // Follow the theme picked on the main page, before first paint.
+  (function () { try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-size:14px}
+[hidden]{display:none!important}
+/* Layout: a dark "engine room" stage. Left, an exploded isometric stack of the software layers with cables
+   to the shared drive, Excel and the printers. Right, the real code for whichever layer is live.
+   Page chrome follows the theme; the stage keeps one dark look in both themes. */
+:root{
+  --bg:#E8EDF2; --ink:#18222E; --muted:#56667A; --red:#D8443A; --green:#23905A; --accent:#2F68B0;
+  --display:"Bricolage Grotesque","Arial Rounded MT Bold","Segoe UI",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  /* stage palette, same in both themes */
+  --k-bg:#0E1621; --k-bg2:#131E2C; --k-grid:#1E2B3B; --k-line:#2B3B50; --k-text:#E6EDF5; --k-muted:#8A9BB0;
+  --k-vba:#8E6CEF; --k-vbs:#7C93B5; --k-ps:#3B82F6; --k-py:#F2C14E; --k-pdf:#F28C38; --k-xl:#2FA86A; --k-share:#5CC8E0;
+  --k-ok:#4ADE80; --k-str:#F2C98A; --k-kw:#B79BFF; --k-com:#6F8299; --k-num:#7DD3FC;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0B121B; --ink:#E6EDF5; --muted:#9AAABD; --red:#FF7366; --green:#62D394; --accent:#7FB2F0; color-scheme:dark }
+}
+:root[data-theme="dark"]{ --bg:#0B121B; --ink:#E6EDF5; --muted:#9AAABD; --red:#FF7366; --green:#62D394; --accent:#7FB2F0; color-scheme:dark }
+body{background:var(--bg);color:var(--ink);font-family:var(--body)}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:22px 34px;display:grid;gap:14px}
+h1{font:800 clamp(28px,4.2vw,42px)/1.05 var(--display);letter-spacing:-.01em;margin:0;text-wrap:balance}
+
+.stage{margin:0;position:relative;background:var(--k-bg);color:var(--k-text);border:3px solid #18222E;border-radius:14px;overflow:hidden;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+.stage svg{display:block;width:100%;height:auto}
+.diagram{min-width:0;background:radial-gradient(circle at 50% 45%, var(--k-bg2), var(--k-bg) 70%)}
+.codecol{min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--k-line);background:var(--k-bg)}
+.tabbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--k-line);background:var(--k-bg2);min-height:52px;flex-wrap:wrap}
+.tab{font:600 13px var(--mono);color:var(--k-text);background:var(--k-bg);border:1px solid var(--k-line);border-bottom:2px solid var(--lang,var(--k-muted));padding:6px 10px;border-radius:6px 6px 0 0;white-space:nowrap}
+.lang{font:800 11px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--k-bg);background:var(--lang,var(--k-muted));padding:4px 8px;border-radius:99px}
+.where{margin-left:auto;font:600 11.5px var(--mono);color:var(--k-muted)}
+.code{flex:1;margin:0;padding:16px 16px 18px;font:400 13px/1.62 var(--mono);color:var(--k-text);white-space:pre-wrap;tab-size:4;min-height:var(--code-h,360px)}
+.code .row{display:block;padding-left:3.3em;text-indent:-3.3em;overflow-wrap:anywhere}
+.code .ln{display:inline-block;width:2.2em;color:#3C4F66;text-align:right;margin-right:1.1em;user-select:none}
+.code .k{color:var(--k-kw)} .code .s{color:var(--k-str)} .code .c{color:var(--k-com);font-style:italic} .code .n{color:var(--k-num)} .code .ok{color:var(--k-ok);font-weight:600}
+.caret{display:inline-block;width:.6em;height:1.1em;vertical-align:-.18em;background:var(--lang,var(--k-text));animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.about{border-top:1px solid var(--k-line);padding:12px 16px 14px;font:400 14px/1.5 var(--body);color:var(--k-muted);min-height:66px}
+.about b{color:var(--k-text);font-weight:700}
+
+.ov{position:absolute;inset:0;display:grid;place-items:center;background:rgba(14,22,33,.97);padding:24px;opacity:0;visibility:hidden}
+.ov-title{text-align:center}
+.ov-title .part{font:800 14px var(--display);letter-spacing:.2em;color:var(--k-py);text-transform:uppercase}
+.ov-title h2{font:800 clamp(44px,8vw,104px)/0.95 var(--display);margin:.15em 0 .2em;letter-spacing:-.02em}
+.ov-title p{font:400 clamp(15px,2vw,21px)/1.4 var(--body);color:var(--k-muted);margin:0}
+.bom{width:min(900px,100%);max-height:100%;overflow:auto}
+#ovBom{padding-bottom:84px}
+.bom h2{font:800 clamp(22px,3vw,34px) var(--display);margin:0 0 4px}
+.bom .sub{font:400 15px var(--body);color:var(--k-muted);margin:0 0 14px}
+.bom table{width:100%;border-collapse:collapse;font:400 14px var(--body)}
+.bom th{font:800 11px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--k-muted);text-align:left;padding:6px 8px;border-bottom:2px solid var(--k-line)}
+.bom td{padding:7px 8px;border-bottom:1px solid var(--k-line);vertical-align:top}
+.bom td:first-child{font:600 13px var(--mono);color:var(--k-muted);width:2.5em}
+.bom td.part{font:600 13.5px var(--mono);white-space:nowrap}
+.bom .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:0}
+.bom .foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.bom .chip{font:800 13px var(--display);letter-spacing:.04em;border:1.5px solid var(--k-line);border-radius:99px;padding:6px 12px}
+.bom tr{opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
+.bom tr.in{opacity:1;transform:none}
+
+.bigplay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;padding:14px 26px 14px 20px;border-radius:999px;background:var(--k-py);color:#18222E;border:3px solid #18222E;font:800 clamp(14px,2vw,21px) var(--display);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;box-shadow:0 5px 0 #18222E;z-index:3}
+.bigplay svg{width:1.3em;height:1.3em;fill:currentColor}
+.bigplay.start{top:78%}
+.bigplay.end{top:auto;bottom:18px;transform:translateX(-50%)}
+.bigplay:focus-visible{outline:3px solid var(--k-share);outline-offset:3px}
+.pill{position:absolute;top:12px;left:12px;font:800 13px var(--display);letter-spacing:.06em;text-transform:uppercase;background:var(--k-text);color:var(--k-bg);padding:6px 14px;border-radius:999px;pointer-events:none;z-index:3}
+.caption{display:grid;gap:4px;min-height:100px;align-content:start}
+.cap-act{font:800 12.5px var(--display);letter-spacing:.12em;margin:0;text-transform:uppercase;color:var(--accent)}
+.caption h2{font:800 clamp(21px,2.6vw,27px)/1.15 var(--display);margin:0;text-wrap:balance}
+#capP{margin:0;font-size:16px;line-height:1.55;max-width:70ch}
+@media (max-width:860px){
+  .stage{grid-template-columns:1fr}
+  .codecol{border-left:0;border-top:1px solid var(--k-line)}
+  .code{font-size:11px;padding:12px}
+  #slabs .lbl-f{display:none}
+  #slabs .lbl-t{font-size:21px}
+  #mailChip text{font-size:14px}
+  .bom th:nth-child(3),.bom td:nth-child(3){display:none}
+  .about{font-size:13px}
+  .bigplay{padding:8px 16px 8px 12px;font-size:13px;border-width:2px;box-shadow:0 3px 0 #18222E}
+  .bigplay.start{top:76%}
+  .pill{top:8px;left:8px;font-size:11px;padding:4px 10px}
+  .pill .more{display:none}
+  .caption{min-height:140px}
+  .bom table{font-size:12.5px}
+  .bom td.part{font-size:12px}
+  #ovBom{padding:16px 16px 76px}
+}
+@media (prefers-reduced-motion: reduce){.caret{animation:none}.bom tr{transition:none}}
+
+/* ---- diagram ---- */
+.dot{fill:var(--k-grid)}
+.lbl-t{font:800 17px var(--display);fill:var(--k-text)}
+.lbl-f{font:600 12px var(--mono);fill:var(--k-muted)}
+.leader{stroke:var(--k-line);stroke-width:1.5}
+.cable{fill:none;stroke-width:3.5;stroke-linecap:round;opacity:.35}
+.cable.on{opacity:1}
+.pulse{stroke:none}
+.ext rect.box{fill:var(--k-bg2);stroke:var(--k-line);stroke-width:2}
+.ext.on rect.box{stroke-width:3}
+.ext-t{font:800 15px var(--display);fill:var(--k-text)}
+.ext-f{font:600 11px var(--mono);fill:var(--k-muted)}
+.iso{font:800 30px var(--display)}
+.chip-t{font:700 12px var(--mono)}
+.tagpill{font:800 11px var(--display);letter-spacing:.08em}
+.chk{fill:none;stroke:var(--k-ok);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.back{font:600 14px var(--body);color:var(--accent);text-decoration:none;justify-self:start}
+.back:hover{text-decoration:underline;text-underline-offset:3px}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <a class="back" href="./#tools">&larr; Back to all tools</a>
+  <h1>IFC Drawing Distribution Under the Hood</h1>
+
+  <figure class="stage" id="stage">
+    <div class="diagram">
+      <svg id="dia" viewBox="0 0 720 760" role="img" aria-labelledby="diaT">
+        <title id="diaT">Exploded view of the software stack: Outlook VBA, VBScript, PowerShell, Python and SumatraPDF, with cables to the shared drive, Excel and two printers.</title>
+        <g id="dots"></g>
+        <!-- incoming email -->
+        <g id="mailChip">
+          <rect x="296" y="16" width="128" height="34" rx="17" fill="#131E2C" stroke="#2B3B50" stroke-width="2"/>
+          <rect x="312" y="25" width="22" height="16" rx="2" fill="none" stroke="#E6EDF5" stroke-width="2"/>
+          <path d="M312 26l11 8 11-8" fill="none" stroke="#E6EDF5" stroke-width="2"/>
+          <text x="342" y="39" class="lbl-f" style="fill:#E6EDF5">IFC email</text>
+        </g>
+        <line x1="360" y1="50" x2="360" y2="58" stroke="#2B3B50" stroke-width="2" stroke-dasharray="3 4"/>
+        <g id="printedTag" style="opacity:0">
+          <rect x="434" y="17" width="150" height="32" rx="16" fill="#123323" stroke="#4ADE80" stroke-width="2"/>
+          <text x="509" y="38" class="tagpill" text-anchor="middle" style="fill:#4ADE80">✓ SHOP PRINTED</text>
+        </g>
+
+        <!-- cables -->
+        <path id="cCom" d="M510 456C556 456 556 126 510 126" class="cable" style="stroke:var(--k-vba)"/>
+        <path id="cShare" d="M510 456C540 456 540 361 566 361" class="cable" style="stroke:var(--k-share)"/>
+        <path id="cExcel" d="M510 456C540 456 540 531 566 531" class="cable" style="stroke:var(--k-xl)"/>
+        <path id="cPrtL" d="M360 665C360 690 300 676 300 700" class="cable" style="stroke:var(--k-pdf)"/>
+        <path id="cPrtG" d="M360 665C360 690 420 676 420 700" class="cable" style="stroke:var(--k-pdf)"/>
+        <g id="comTag"><rect x="530" y="278" width="48" height="22" rx="11" fill="#0E1621" stroke="#8E6CEF" stroke-width="1.5"/><text x="554" y="293" class="tagpill" text-anchor="middle" style="fill:#B79BFF">COM</text></g>
+
+        <!-- external systems -->
+        <g id="xShare" class="ext">
+          <rect class="box" x="566" y="330" width="146" height="62" rx="10"/>
+          <path d="M580 348h12l4 4h20v20h-36z" fill="none" stroke="#5CC8E0" stroke-width="2"/>
+          <text x="624" y="356" class="ext-t">Shared</text><text x="624" y="374" class="ext-t">drive</text>
+          <text x="580" y="388" class="ext-f">SMB</text>
+        </g>
+        <g id="xExcel" class="ext">
+          <rect class="box" x="566" y="500" width="146" height="62" rx="10"/>
+          <rect x="580" y="514" width="30" height="34" rx="3" fill="none" stroke="#2FA86A" stroke-width="2"/>
+          <path d="M580 525h30M580 536h30M592 514v34" stroke="#2FA86A" stroke-width="1.5"/>
+          <text x="620" y="527" class="ext-t">Excel</text>
+          <text x="620" y="545" class="ext-f">Sign-Off.xlsx</text>
+        </g>
+        <g id="xPrint" class="ext">
+          <g id="prL"><rect class="box" x="262" y="700" width="76" height="44" rx="8"/><rect x="274" y="708" width="52" height="5" rx="2" fill="#2B3B50"/><text x="300" y="734" class="ext-f" text-anchor="middle" style="fill:#E6EDF5">LETTER</text></g>
+          <g id="prG"><rect class="box" x="382" y="700" width="76" height="44" rx="8"/><rect x="394" y="708" width="52" height="5" rx="2" fill="#2B3B50"/><text x="420" y="734" class="ext-f" text-anchor="middle" style="fill:#E6EDF5">LEDGER</text></g>
+        </g>
+        <g id="sheets"></g>
+
+        <!-- the stack -->
+        <g id="slabs"></g>
+        <g id="pulses"></g>
+        <g id="packet" style="opacity:0">
+          <circle r="16" fill="#E6EDF5" opacity=".18"/>
+          <circle r="9" fill="#E6EDF5"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="codecol">
+      <div class="tabbar"><span class="tab" id="tab">IFC Print Run</span><span class="lang" id="lang">folder</span><span class="where" id="where"></span></div>
+      <pre class="code" id="code" aria-live="off"></pre>
+      <div class="about" id="about"></div>
+    </div>
+
+    <div class="ov ov-title" id="ovTitle">
+      <div>
+        <div class="part">How it's built</div>
+        <h2>Under the hood</h2>
+        <p>The stack behind the Automated IFC Drawing Distribution System.<br>Every line of code you'll see is from the real tool.</p>
+      </div>
+    </div>
+
+    <div class="ov" id="ovBom">
+      <div class="bom">
+        <h2>Bill of materials</h2>
+        <p class="sub">Everything the system is made of, from the email to the paper.</p>
+        <table>
+          <thead><tr><th>Item</th><th>Part</th><th>Type</th><th>Job</th></tr></thead>
+          <tbody id="bomRows"></tbody>
+        </table>
+        <div class="foot" id="bomFoot"></div>
+      </div>
+    </div>
+
+    <button id="bigPlay" class="bigplay start" type="button" aria-label="Play with sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span>Play</span></button>
+    <div id="pausedPill" class="pill" hidden>Paused<span class="more"> · tap to resume</span></div>
+  </figure>
+
+  <section class="caption" aria-live="polite">
+    <p class="cap-act" id="capAct">Under the hood</p>
+    <h2 id="capH">What actually runs</h2>
+    <p id="capP">What runs when an IFC email lands. Every snippet here is real code from the tool.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const DUR = 72;
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const seg = (t, a, b) => clamp((t - a) / (b - a));
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const eio = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+  const eout = p => 1 - Math.pow(1 - p, 3);
+  const op = (el, o) => { el.style.opacity = o; el.style.visibility = o <= 0.001 ? 'hidden' : 'visible'; };
+  const tf = (el, s) => el.setAttribute('transform', s);
+  const NS = 'http://www.w3.org/2000/svg';
+  const add = (id, html) => $(id).insertAdjacentHTML('beforeend', html);
+
+  /* ---------- the layers ---------- */
+  const COL = { vba: '#8E6CEF', vbs: '#7C93B5', ps: '#3B82F6', py: '#F2C14E', pdf: '#F28C38', xl: '#2FA86A', share: '#5CC8E0' };
+  const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16); const c = s => Math.round(((n >> s) & 255) * k); return `rgb(${c(16)},${c(8)},${c(0)})`; };
+  const CX = 360, A = 150, B = 75, H = 24;
+  const LAYERS = [
+    { y: 126, col: COL.vba, iso: 'VBA',  title: 'Outlook Classic', file: 'ThisOutlookSession.vba' },
+    { y: 236, col: COL.vbs, iso: '.vbs', title: 'Windows Script Host', file: 'trigger.vbs' },
+    { y: 346, col: COL.ps,  iso: '.ps1', title: 'PowerShell', file: 'Run-IFCPrint.ps1' },
+    { y: 456, col: COL.py,  iso: '.py',  title: 'Python 3', file: 'ifc_print.py' },
+    { y: 566, col: COL.pdf, iso: 'PDF',  title: 'SumatraPDF', file: 'command line' }
+  ];
+  const ISO = 'matrix(0.894 0.447 -0.894 0.447 0 0)';
+  for (let x = 20; x < 720; x += 40) for (let y = 70; y < 700; y += 40) add('dots', `<circle cx="${x}" cy="${y}" r="1.6" class="dot"/>`);
+  LAYERS.forEach((L, i) => {
+    const y = L.y;
+    const chips = i === 3 ? [['pywin32', 298, 446], ['pypdf', 422, 446], ['stdlib', 360, 488]].map(([n, x, cy]) =>
+      `<g id="chip-${n}"><path d="M${x - 46} ${cy}L${x} ${cy - 23}L${x + 46} ${cy}L${x} ${cy + 23}Z" fill="${shade(L.col, 0.55)}" stroke="#18222E" stroke-width="2"/>
+       <text class="chip-t" text-anchor="middle" transform="translate(${x} ${cy}) ${ISO}" x="0" y="4" fill="#FFF7E0">${n}</text></g>`).join('') : '';
+    $('slabs').insertAdjacentHTML('afterbegin', `<g id="slab${i}">
+      <path d="M${CX - A} ${y}L${CX} ${y + B}L${CX} ${y + B + H}L${CX - A} ${y + H}Z" fill="${shade(L.col, 0.62)}"/>
+      <path d="M${CX} ${y + B}L${CX + A} ${y}L${CX + A} ${y + H}L${CX} ${y + B + H}Z" fill="${shade(L.col, 0.45)}"/>
+      <path id="top${i}" d="M${CX - A} ${y}L${CX} ${y - B}L${CX + A} ${y}L${CX} ${y + B}Z" fill="${L.col}" stroke="#18222E" stroke-width="2"/>
+      ${i === 3 ? '' : `<text class="iso" text-anchor="middle" transform="translate(${CX} ${y}) ${ISO}" x="0" y="10" fill="${shade(L.col, 0.35)}">${L.iso}</text>`}
+      ${chips}
+      <line x1="200" y1="${y}" x2="${CX - A - 4}" y2="${y}" class="leader"/>
+      <text x="196" y="${y - 4}" class="lbl-t" text-anchor="end">${L.title}</text>
+      <text x="196" y="${y + 14}" class="lbl-f" text-anchor="end">${L.file}</text>
+      <path id="ck${i}" d="M${CX + A + 8} ${y - 22}l6 6 12 -14" class="chk" style="opacity:0"/>
+    </g>`);
+  });
+  add('slabs', `<path id="ckShare" d="M690 340l6 6 12 -14" class="chk" style="opacity:0"/>`);
+  for (let k = 0; k < 4; k++) add('sheets', `<g id="sh${k}" style="opacity:0"><rect x="-9" y="-12" width="${k % 2 ? 26 : 18}" height="${k % 2 ? 18 : 24}" rx="2" fill="#F7F9FB" stroke="#18222E" stroke-width="1.5"/></g>`);
+  for (let k = 0; k < 4; k++) add('pulses', `<circle id="pu${k}" r="6" class="pulse" style="opacity:0"/>`);
+
+  /* ---------- real code, step by step ---------- */
+  const STEPS = [
+    { t: 0, title: 'What actually runs', desc: 'What runs when an IFC email lands. Every snippet here is real code from the tool.', tab: 'IFC Print Run', lang: 'folder', lc: '#8A9BB0', where: '', code: '' },
+    { t: 3.5, title: 'One folder on the shared drive', desc: 'The whole system is one folder: a VBA macro, a VBScript, two PowerShell scripts, a Python app, a JSON config, an Excel template and a bundled PDF printer.', tab: 'IFC Print Run\\', lang: 'folder', lc: '#8A9BB0', where: 'shared drive', hl: 'sh', about: '<b>Repo:</b> private on GitHub. <b>Install:</b> one copy on the shared drive that everyone runs.',
+      code: String.raw`IFC Print Run\
+├─ trigger.vbs
+├─ requirements.txt         # pypdf, pywin32
+├─ App\
+│  ├─ ThisOutlookSession.vba
+│  ├─ Run-IFCPrint.ps1
+│  ├─ ifc_print.py          # 1,588 lines
+│  ├─ config.json
+│  └─ Setup.ps1
+├─ Template\Sign-Off form 1.xlsx
+├─ Tools\SumatraPDF.exe
+└─ Inbox\  Printed\  Exceptions\  Logs` + '\\'},
+    { t: 8.5, layer: 0, title: 'Outlook raises the event', desc: 'Outlook Classic fires Application_NewMailEx the moment mail lands. A VBA macro catches it and hands off with one hidden Shell call. Nothing runs between emails.', tab: 'ThisOutlookSession.vba', lang: 'VBA', lc: COL.vba, where: 'inside Outlook', hl: 'vb', about: '<b>Runs in:</b> Outlook Classic\'s own VBA engine. <b>Installed by:</b> one paste into the editor (Alt+F11).',
+      code: String.raw`Private WithEvents InboxItems As Outlook.Items
+
+Private Sub Application_NewMailEx(ByVal EntryIDCollection As String)
+    ids = Split(EntryIDCollection, ",")
+    Set item = Session.GetItemFromID(Trim$(ids(i)))
+
+    If InStr(1, item.Subject, "for Construction", vbTextCompare) > 0 Then
+        FireAuto
+    End If
+End Sub
+
+Private Sub Launch(ByVal mode As String)
+    Shell "wscript.exe """ & path & """ " & mode, vbHide
+End Sub`},
+    { t: 14, layer: 1, title: 'A hidden launcher', desc: 'Windows Script Host runs a tiny VBScript. It finds the runner next to itself and starts PowerShell with window style 0, so no console flashes, and False, so Outlook never waits.', tab: 'trigger.vbs', lang: 'VBScript', lc: COL.vbs, where: 'wscript.exe', hl: 'vb', about: '<b>Runs in:</b> Windows Script Host, built into Windows. <b>Why it exists:</b> the macro keeps one path instead of a command line.',
+      code: String.raw`Set fso = CreateObject("Scripting.FileSystemObject")
+
+runner = fso.BuildPath( _
+    fso.GetParentFolderName(WScript.ScriptFullName), _
+    "App\Run-IFCPrint.ps1")
+
+If Not fso.FileExists(runner) Then WScript.Quit 0
+
+Set shell = CreateObject("WScript.Shell")
+
+shell.Run _
+    "powershell.exe -NoProfile -ExecutionPolicy Bypass -File """ & runner & """" & mode, _
+    0, _
+    False`},
+    { t: 19, layer: 2, title: 'The runner', desc: 'PowerShell builds every path from its own location, so the folder runs from any drive. It calls Python, captures all of its output, and stamps the user and exit code into runner.log.', tab: 'Run-IFCPrint.ps1', lang: 'PowerShell', lc: COL.ps, where: 'powershell.exe', hl: 'ps', about: '<b>Runs in:</b> Windows PowerShell, built into Windows. <b>Writes:</b> Logs\\runner.log on the shared drive.',
+      code: String.raw`param([switch]$Auto)
+
+$App         = $PSScriptRoot
+$ProjectRoot = Split-Path -Parent $App
+$LogDir      = Join-Path $ProjectRoot "Logs"
+$Log         = Join-Path $LogDir "runner.log"
+$Script      = Join-Path $App "ifc_print.py"
+
+Add-Content $Log "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') [$env:USERNAME] $Label started"
+
+& python $Script @PyArgs *> $OutputFile
+$ExitCode = $LASTEXITCODE
+
+exit $ExitCode`},
+    { t: 24, layer: 3, chip: 'stdlib', title: 'The app', desc: 'ifc_print.py does the real work in 1,588 lines of Python 3. The standard library handles files, patterns, hashing and processes. Two packages from pip do the rest.', tab: 'ifc_print.py', lang: 'Python 3', lc: COL.py, where: 'python.exe · 1,588 lines', hl: 'py', about: '<b>Packages:</b> <b>pywin32</b> talks to Windows and Office. <b>pypdf</b> reads and writes PDFs. Both from requirements.txt.',
+      code: String.raw`#!/usr/bin/env python3
+"""IFC shop packet processor for Outlook Classic on Windows."""
+import hashlib
+import json
+import re
+import shutil
+import subprocess
+from fnmatch import fnmatch
+from pathlib import Path
+
+import pywintypes
+import win32api
+import win32com.client
+import win32wnet
+from pypdf import PdfReader, PdfWriter`},
+    { t: 29, layer: 3, chip: 'pywin32', port: 'com', title: 'Talking to Outlook', desc: 'pywin32 drives Outlook over COM. GetActiveObject attaches to the Outlook already open, Restrict filters inside the mailbox, SaveAsFile pulls attachments, and MAPI property 0x1035001F reads the Internet Message-ID.', tab: 'ifc_print.py', lang: 'Python · COM', lc: COL.vba, where: 'pywin32 → Outlook', hl: 'py', about: '<b>Library:</b> pywin32 (win32com.client). <b>Talks to:</b> the Outlook Classic you already have open, never a new one.',
+      code: String.raw`def connect_outlook():
+    return win32com.client.GetActiveObject(
+        "Outlook.Application"
+    ).GetNamespace("MAPI")
+
+inbox = outlook.GetDefaultFolder(6)
+found = inbox.Items.Restrict(f"[Categories] = '{trigger}'")
+
+attachment.SaveAsFile(str(target))
+
+PR_INTERNET_MESSAGE_ID = (
+    "http://schemas.microsoft.com/mapi/proptag/0x1035001F"
+)
+value = mail.PropertyAccessor.GetProperty(PR_INTERNET_MESSAGE_ID)`},
+    { t: 34, layer: 3, chip: 'pywin32', port: 'share', title: 'Reaching the shared drive', desc: 'The drawings often sit behind a Shop link. Python reads it out of the email HTML, matches it to your mapped drive with win32wnet, and copies the PDFs over SMB. Claim files use O_EXCL, so only one PC can win.', tab: 'ifc_print.py', lang: 'Python · SMB', lc: COL.share, where: 'win32wnet · shutil', hl: 'py', about: '<b>Libraries:</b> win32wnet and win32api from pywin32, plus urllib, shutil and os from the standard library.',
+      code: String.raw`html = mail.HTMLBody or ""
+for href, inner in re.findall(
+    r'<a\b[^>]*href\s*=\s*"([^"]+)"[^>]*>(.*?)</a>',
+    html,
+    re.I | re.S,
+):
+
+decoded = urllib.parse.unquote(href)
+
+drives = win32api.GetLogicalDriveStrings().split("\x00")
+unc = win32wnet.WNetGetConnection(letter)
+
+shutil.copy2(entry, source / name)
+
+handle = os.open(
+    claim_path(mail),
+    os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+)`},
+    { t: 39, layer: 3, chip: 'pypdf', title: 'Handling the PDFs', desc: 'pypdf rotates every Ledger drawing 180° inside the file, checks each PDF opens and has pages, and pulls the text out of the DRC for the Sign-Off.', tab: 'ifc_print.py', lang: 'Python · pypdf', lc: COL.pdf, where: 'pypdf', hl: 'py', about: '<b>Library:</b> pypdf, pure Python, no PDF software needed for this part.',
+      code: String.raw`reader = PdfReader(str(source))
+writer = PdfWriter()
+
+for page in reader.pages:
+    page.rotate(180)
+    writer.add_page(page)
+
+with output.open("wb") as f:
+    writer.write(f)
+
+def text_from_pdf(path: Path) -> str:
+    return "\n".join(
+        (page.extract_text() or "")
+        for page in PdfReader(str(path)).pages
+    )`},
+    { t: 44, layer: 3, chip: 'pywin32', port: 'excel', title: 'Excel, with nobody at the keyboard', desc: 'A hidden copy of Excel opens the real Sign-Off template over COM, fills the cells, and exports straight to PDF. Logo and formatting survive because Excel itself does the editing.', tab: 'ifc_print.py', lang: 'Python · COM', lc: COL.xl, where: 'pywin32 → Excel', hl: 'py', about: '<b>Library:</b> pywin32 (DispatchEx). <b>Uses:</b> the Excel already licensed on every desk.',
+      code: String.raw`excel = win32com.client.DispatchEx("Excel.Application")
+excel.Visible = False
+excel.DisplayAlerts = False
+
+opened_workbook = excel.Workbooks.Open(str(xlsx))
+worksheet = opened_workbook.Worksheets("Sheet1")
+
+worksheet.Range("D3").Value = release
+worksheet.Range("B5").Value = package
+worksheet.Range("C5").Value = revisions
+
+opened_workbook.Save()
+worksheet.ExportAsFixedFormat(0, str(pdf))
+excel.Quit()`},
+    { t: 49, layer: 4, port: 'print', title: 'Silent printing', desc: 'SumatraPDF, a free single-file PDF reader, prints from the command line with no window. One call per PDF, routed to the Letter queue or the Ledger queue.', tab: 'ifc_print.py', lang: 'SumatraPDF', lc: COL.pdf, where: 'subprocess → SumatraPDF.exe', hl: 'py', about: '<b>Tool:</b> SumatraPDF, free and open source. A copy sits in Tools\\, so a new PC installs nothing.',
+      code: String.raw`sumatra_path = find_sumatra()
+
+command = [
+    str(sumatra_path),
+    "-print-to",
+    printer_name,
+    "-print-settings",
+    "simplex",
+    str(path)
+]
+
+completed = subprocess.run(
+    command,
+    capture_output=True,
+    text=True
+)`},
+    { t: 54, layer: 3, chip: 'pywin32', port: 'com', done: true, title: 'Reporting back', desc: 'Through the same COM connection, Python tags the email SHOP PRINTED. It writes manifest.json with every file and print job, and adds the run to a per-user log.', tab: 'ifc_print.py', lang: 'Python · COM', lc: COL.vba, where: 'pywin32 → Outlook', hl: 'py', about: '<b>Leaves behind:</b> a re-tagged email, a manifest.json and a log line. Nothing to clean up.',
+      code: String.raw`mail.Categories = ", ".join(current)
+mail.Save()
+
+(folder / "manifest.json").write_text(
+    json.dumps(data, indent=2),
+    encoding="utf-8",
+)
+
+log(f"{job}: completed to {destination}")`},
+    { t: 58, deploy: true, title: 'One install for everyone', desc: 'The code lives in a private GitHub repo and runs from one install on the shared drive, so an update reaches everyone at once. Setup.ps1 checks a new PC. The only manual step is pasting the macro.', tab: 'Setup.ps1', lang: 'PowerShell', lc: COL.ps, where: 'one-time setup', hl: 'out', about: '<b>Packages:</b> python -m pip install -r requirements.txt. <b>Smoke test:</b> python -c "import ifc_print".',
+      code: String.raw`PS> powershell -ExecutionPolicy Bypass -File "App\Setup.ps1"
+
+Install location
+  [ ok ] this is the shared install the Outlook macro looks for
+Packages
+  [ ok ] pypdf and pywin32 installed
+SumatraPDF
+  [ ok ] using the copy bundled with the install
+Smoke test
+  [ ok ] config parsed and every dependency resolved
+
+Ready. One step left, and it has to be done by hand:
+  Outlook Classic > Alt+F11 > ThisOutlookSession > paste > Ctrl+S`},
+    { t: 64, bom: true, title: 'Bill of materials', desc: 'Built on the Outlook and Excel every desk already has, plus free, open-source tools. No new server and no subscription.', tab: 'requirements.txt', lang: 'pip', lc: COL.py, where: '', hl: 'sh', about: '',
+      code: String.raw`pypdf
+pywin32`}
+  ];
+  const BOM = [
+    ['1', 'Outlook Classic', 'VBA macro', 'Catches new mail', COL.vba],
+    ['2', 'trigger.vbs', 'VBScript', 'Hidden launcher', COL.vbs],
+    ['3', 'Run-IFCPrint.ps1', 'PowerShell', 'Runner and log', COL.ps],
+    ['4', 'ifc_print.py', 'Python 3 · 1,588 lines', 'The app', COL.py],
+    ['5', 'pywin32', 'pip package', 'Outlook, Excel, drives', COL.py],
+    ['6', 'pypdf', 'pip package', 'Rotate, check, read PDFs', COL.py],
+    ['7', 'Excel', 'COM automation', 'Sign-Off to PDF', COL.xl],
+    ['8', 'SumatraPDF', 'Command line', 'Silent printing', COL.pdf],
+    ['9', 'config.json', 'JSON', 'Printers, patterns, categories', '#8A9BB0'],
+    ['10', 'Setup.ps1 + Git', 'PowerShell', 'One shared install', COL.ps]
+  ];
+  $('bomRows').innerHTML = BOM.map(([n, p, ty, job, c], i) => `<tr id="br${i}"><td>${n}</td><td class="part"><span class="sw" style="background:${c}"></span>${p}</td><td>${ty}</td><td>${job}</td></tr>`).join('');
+  $('bomFoot').innerHTML = ['0 new servers', '0 subscriptions', '2 pip packages', '1 macro paste per user'].map(s => `<span class="chip">${s}</span>`).join('');
+
+  /* ---------- syntax colouring ---------- */
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const KW = {
+    vb: 'Private|Public|Sub|End|Function|Dim|Set|If|Then|Else|For|To|Next|As|ByVal|String|Long|Object|WithEvents|Exit|Not|And|Or|Quit',
+    ps: 'param|if|else|exit|foreach|in',
+    py: 'def|return|import|from|for|in|with|as|if|not|and|or|True|False|None|try|except|raise',
+  };
+  function words(s, lang) {
+    let out = s;
+    if (KW[lang]) out = out.replace(new RegExp('\\b(' + KW[lang] + ')\\b', 'g'), '<span class="k">$1</span>');
+    return out.replace(/\b(\d[\d,]*)\b/g, '<span class="n">$1</span>');
+  }
+  function colour(line, lang) {
+    if (lang === 'out') {
+      return esc(line).replace('[ ok ]', '<span class="ok">[ ok ]</span>').replace(/^(PS&gt;)/, '<span class="k">$1</span>');
+    }
+    const cchar = lang === 'vb' ? "'" : '#';
+    let code = line, com = '', q = '';
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (q) { if (c === q) q = ''; }
+      else if (c === '"' || (c === "'" && lang === 'py')) q = c;
+      else if (c === cchar) { code = line.slice(0, i); com = line.slice(i); break; }
+    }
+    let out = '', last = 0, m;
+    const re = lang === 'py' ? /r?'[^']*'?|"(?:[^"\\]|\\.)*"?/g : /"(?:[^"\\]|\\.)*"?/g;
+    while ((m = re.exec(code))) {
+      out += words(esc(code.slice(last, m.index)), lang) + `<span class="s">${esc(m[0])}</span>`;
+      last = m.index + m[0].length;
+      if (!m[0].length) re.lastIndex++;
+    }
+    out += words(esc(code.slice(last)), lang);
+    if (com) out += `<span class="c">${esc(com)}</span>`;
+    return out;
+  }
+
+  let shownKey = '';
+  function renderCode(t, idx) {
+    const s = STEPS[idx];
+    const lines = s.code ? s.code.split('\n') : [];
+    const total = lines.reduce((n, l) => n + l.length + 1, 0);
+    const typeDur = Math.min(3.2, 0.6 + total * 0.006);
+    const start = s.t + 0.25;
+    const shown = s.bom ? total : Math.floor(total * seg(t, start, start + typeDur));
+    const key = idx + ':' + shown;
+    if (key === shownKey) return;
+    shownKey = key;
+    $('stage').style.setProperty('--lang', s.lc);
+    $('tab').textContent = s.tab; $('lang').textContent = s.lang; $('where').textContent = s.where || '';
+    $('about').innerHTML = s.about || '';
+    let left = shown, html = '';
+    lines.forEach((l, i) => {
+      if (left <= 0) return;
+      const part = l.slice(0, Math.min(l.length, left));
+      const typing = left <= l.length;
+      html += `<span class="row"><span class="ln">${i + 1}</span>${colour(part, s.hl)}${typing && shown < total ? '<span class="caret"></span>' : ''}</span>`;
+      left -= l.length + 1;
+    });
+    if (!html && s.code) html = `<span class="row"><span class="ln">1</span><span class="caret"></span></span>`;
+    $('code').innerHTML = html;
+  }
+
+  /* ---------- diagram geometry ---------- */
+  const PATHS = { com: $('cCom'), share: $('cShare'), excel: $('cExcel'), prtL: $('cPrtL'), prtG: $('cPrtG') };
+  const LEN = {}; for (const k in PATHS) LEN[k] = PATHS[k].getTotalLength();
+  const at = (k, p) => PATHS[k].getPointAtLength(clamp(p) * LEN[k]);
+  const stepIdx = t => { let i = 0; STEPS.forEach((s, k) => { if (t >= s.t) i = k; }); return i; };
+
+  function render(t) {
+    const idx = stepIdx(t), s = STEPS[idx];
+
+    // build the stack: slabs drop in one by one
+    LAYERS.forEach((L, i) => {
+      const el = $('slab' + i);
+      const d = eout(seg(t, 4.0 + i * 0.55, 4.45 + i * 0.55));
+      const live = s.layer === i || (s.deploy && t >= 59 + (4 - i) * 0.6);
+      const lift = s.layer === i ? -10 * eio(seg(t, s.t, s.t + 0.35)) : 0;
+      const dim = (s.layer !== undefined && s.layer !== i) ? 0.42 : 1;
+      tf(el, `translate(0 ${(1 - d) * -60 + lift})`);
+      op(el, d * dim);
+      $('top' + i).setAttribute('stroke', live ? '#E6EDF5' : '#18222E');
+      $('top' + i).setAttribute('stroke-width', live ? 3 : 2);
+      op($('ck' + i), s.deploy || s.bom ? seg(t, 59 + (4 - i) * 0.6, 59.3 + (4 - i) * 0.6) : 0);
+    });
+    op($('ckShare'), s.deploy || s.bom ? seg(t, 58.6, 58.9) : 0);
+    ['pywin32', 'pypdf', 'stdlib'].forEach(n => {
+      const on = s.chip === n;
+      const ch = $('chip-' + n);
+      tf(ch, on ? `translate(0 ${-6 * eio(seg(t, s.t, s.t + 0.3))})` : '');
+      ch.querySelector('path').setAttribute('stroke', on ? '#FFF7E0' : '#18222E');
+      ch.querySelector('path').setAttribute('stroke-width', on ? 3 : 2);
+    });
+
+    // cables and the systems around the stack
+    const ext = d => seg(t, 6.5, 7.2) * d;
+    const port = s.port;
+    const cableOn = { com: port === 'com', share: port === 'share', excel: port === 'excel', prtL: port === 'print', prtG: port === 'print' };
+    for (const k in PATHS) { PATHS[k].classList.toggle('on', cableOn[k]); op(PATHS[k], ext(1)); }
+    op($('comTag'), ext(port === 'com' ? 1 : 0.5));
+    [['xShare', 'share'], ['xExcel', 'excel'], ['xPrint', 'print']].forEach(([id, p]) => {
+      const on = port === p || (id === 'xShare' && (s.deploy || idx === 1));
+      $(id).classList.toggle('on', on);
+      op($(id), ext(on ? 1 : 0.55));
+      $(id).querySelectorAll('rect.box').forEach(r => r.setAttribute('stroke', on ? (p === 'share' ? COL.share : p === 'excel' ? COL.xl : COL.pdf) : '#2B3B50'));
+    });
+    op($('mailChip'), ext(1));
+    op($('printedTag'), s.done || (idx > 10 && !s.bom) ? eout(seg(t, 54.6, 55)) : 0);
+
+    // data pulses along the live cable
+    const lanes = port === 'print' ? ['prtL', 'prtG', 'prtL', 'prtG'] : port ? [port, port, port, port] : [];
+    for (let k = 0; k < 4; k++) {
+      const el = $('pu' + k);
+      if (!lanes[k] || t < s.t + 0.4) { op(el, 0); continue; }
+      let p = ((t - s.t) * 0.7 + k * 0.25) % 1;
+      if (port === 'com' && !s.done && k % 2) p = 1 - p;          // both ways on COM
+      const pt = at(lanes[k], p);
+      el.setAttribute('cx', pt.x); el.setAttribute('cy', pt.y);
+      el.setAttribute('fill', port === 'share' ? COL.share : port === 'excel' ? COL.xl : port === 'print' ? COL.pdf : '#B79BFF');
+      op(el, Math.sin(Math.PI * p) * 0.95 + 0.05);
+    }
+
+    // paper coming out of the printers
+    for (let k = 0; k < 4; k++) {
+      const el = $('sh' + k);
+      if (port !== 'print' || t < s.t + 0.8) { op(el, 0); continue; }
+      const p = ((t - s.t - 0.8) * 0.8 + k * 0.5) % 1;
+      const x = k % 2 ? 420 : 300;
+      tf(el, `translate(${x - (k % 2 ? 4 : 0)} ${712 - 30 * eout(p)})`);
+      op(el, 1 - p);
+    }
+
+    // the packet: drops in from the email, then sits in whichever layer is live
+    let py = null;
+    if (t >= 8.5 && t < 58) {
+      const prevLayer = idx > 0 && STEPS[idx - 1].layer !== undefined ? STEPS[idx - 1].layer : -1;
+      const fromY = prevLayer >= 0 ? LAYERS[prevLayer].y : 30;
+      const toY = LAYERS[s.layer].y;
+      py = lerp(fromY, toY, eio(seg(t, s.t, s.t + 0.6)));
+    }
+    if (py !== null) {
+      tf($('packet'), `translate(${CX} ${py - 10}) scale(${1 + 0.12 * Math.sin(t * 6)})`);
+      op($('packet'), seg(t, 8.5, 8.7));
+      $('packet').querySelectorAll('circle').forEach(c => c.setAttribute('fill', s.lc || '#E6EDF5'));
+    } else op($('packet'), 0);
+
+    // overlays
+    op($('ovTitle'), 1 - seg(t, 3.0, 3.5));
+    op($('ovBom'), seg(t, 64, 64.5));
+    BOM.forEach((_, i) => $('br' + i).classList.toggle('in', t >= 64.4 + i * 0.32));
+
+    renderCode(t, idx);
+  }
+
+  /* ---------- sound: generated in the browser, always on ---------- */
+  let AC = null, OUT = null, NOISE = null;
+  function initAudio() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return false;
+    AC = new Ctx();
+    const comp = AC.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+    OUT = AC.createGain(); OUT.gain.value = 0.6; OUT.connect(comp); comp.connect(AC.destination);
+    NOISE = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
+    const d = NOISE.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return true;
+  }
+  function env(g, at, peak, a, dur) { g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + a); g.gain.exponentialRampToValueAtTime(0.0001, at + dur); }
+  function tone(f, at, dur, type = 'sine', peak = 0.2, a = 0.005, filt = 0, f2 = 0) {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, at);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, at + dur * 0.8);
+    let node = o;
+    if (filt) { const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = filt; lp.Q.value = 3; o.connect(lp); node = lp; }
+    node.connect(g); g.connect(OUT); env(g, at, peak, a, dur); o.start(at); o.stop(at + dur + 0.05);
+  }
+  function noise(at, dur, peak, type = 'highpass', freq = 6000, q = 0.7, f2 = 0) {
+    const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+    s.buffer = NOISE; f.type = type; f.frequency.setValueAtTime(freq, at); f.Q.value = q;
+    if (f2) f.frequency.exponentialRampToValueAtTime(f2, at + dur);
+    s.connect(f); f.connect(g); g.connect(OUT); env(g, at, peak, 0.004, dur); s.start(at, Math.random() * 0.4); s.stop(at + dur + 0.05);
+  }
+  const ding = (at, f) => { tone(f, at, 0.6, 'sine', 0.16); tone(f * 2.01, at, 0.3, 'sine', 0.04); };
+  const EV = [];
+  const ev = (time, fn) => EV.push([time, fn]);
+  ev(0.3, at => noise(at, 1.2, 0.12, 'bandpass', 300, 0.8, 4000));
+  ev(1.2, at => [261.63, 392, 523.25].forEach((f, i) => ding(at + i * 0.12, f * 2)));
+  LAYERS.forEach((_, i) => ev(4.4 + i * 0.55, at => { tone(110 - i * 8, at, 0.25, 'sine', 0.5, 0.002, 0, 45); noise(at, 0.06, 0.2, 'lowpass', 1200); }));
+  ev(6.6, at => noise(at, 0.5, 0.06, 'bandpass', 800, 1, 3000));
+  // a blip as the packet enters each layer, then typing while the code writes itself
+  STEPS.forEach((s, i) => {
+    if (s.layer !== undefined) ev(s.t + 0.45, at => { tone([660, 740, 830, 990, 1110][s.layer], at, 0.12, 'square', 0.05, 0.003, 3000); tone([660, 740, 830, 990, 1110][s.layer] * 1.5, at + 0.06, 0.15, 'sine', 0.08); });
+    if (s.code && !s.bom) {
+      const total = s.code.length, dur = Math.min(3.2, 0.6 + total * 0.006);
+      for (let x = s.t + 0.3, k = 0; x < s.t + 0.25 + dur; k++) { ev(x, at => noise(at, 0.012, 0.09, 'bandpass', 3800, 2)); x += 0.055 + ((k * 7) % 5) * 0.012; }
+    }
+    if (s.port && s.port !== 'print') for (let x = s.t + 0.7; x < s.t + 4.8; x += 0.7) ev(x, at => tone(s.port === 'share' ? 520 : s.port === 'excel' ? 440 : 600, at, 0.18, 'sine', 0.07, 0.01, 0, s.port === 'share' ? 780 : 700));
+    if (s.port === 'print') for (let x = s.t + 0.9; x < s.t + 4.8; x += 0.62) ev(x, at => { tone(170, at, 0.22, 'sawtooth', 0.05, 0.01, 900, 250); noise(at, 0.2, 0.06, 'bandpass', 1400, 1.5); });
+  });
+  ev(54.7, at => [1046.5, 1318.5, 1568].forEach((f, i) => ding(at + i * 0.09, f)));
+  [58.6, 59.0, 59.6, 60.2, 60.8, 61.4].forEach((x, i) => ev(x, at => ding(at, 880 + i * 90)));
+  ev(64.1, at => [130.81, 164.81, 196, 261.63, 329.63, 392].forEach(f => tone(f, at, 3.6, 'triangle', 0.06, 0.05, 2200)));
+  for (let i = 0; i < 10; i++) ev(64.4 + i * 0.32, at => tone(520 + i * 40, at, 0.06, 'sine', 0.05));
+  // a quiet pulse underneath: 100 beats per minute
+  const CHORDS = [[220, 261.63, 329.63, 392], [174.61, 220, 261.63, 329.63], [261.63, 329.63, 392, 493.88], [196, 246.94, 293.66, 392]];
+  for (let e = 0; 3.5 + e * 0.3 < 63.9; e++) {
+    const x = 3.5 + e * 0.3, bar = Math.floor(e / 8) % 4, ch = CHORDS[bar];
+    ev(x, at => tone(ch[e % 4] * (e % 8 < 4 ? 1 : 2), at, 0.22, 'triangle', 0.028, 0.005, 2600));
+    if (e % 8 === 0) ev(x, at => tone(ch[0] / 2, at, 2.2, 'sine', 0.07, 0.04));
+    if (e % 4 === 0) ev(x, at => tone(120, at, 0.16, 'sine', 0.3, 0.002, 0, 45));
+    if (e % 2) ev(x, at => noise(at, 0.025, 0.03, 'highpass', 8000));
+  }
+  EV.sort((a, b) => a[0] - b[0]);
+  function audioStep(prev, cur) {
+    if (!AC) return;
+    if (cur < prev || cur - prev > 0.3) return;
+    const at = AC.currentTime + 0.02;
+    for (const [et, fn] of EV) { if (et > cur) break; if (et > prev) fn(at); }
+  }
+  function unlockAudio() { if (!AC && !initAudio()) return; if (AC.state === 'suspended') AC.resume(); }
+  ['pointerdown', 'touchstart', 'keydown'].forEach(type => document.addEventListener(type, unlockAudio, { passive: true }));
+
+  /* ---------- tap the screen to play or pause; Restart at the end ---------- */
+  let t = 0, playing = false, last = null, capIdx = -1;
+  const bigPlay = $('bigPlay'), pill = $('pausedPill'), stage = $('stage');
+  const ICON_PLAY = 'M8 5v14l11-7z', ICON_RESTART = 'M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z';
+  function sync() {
+    const atEnd = t >= DUR, mid = t > 0.01 && !atEnd;
+    bigPlay.hidden = playing || mid;
+    bigPlay.classList.toggle('end', atEnd); bigPlay.classList.toggle('start', !atEnd);
+    bigPlay.querySelector('span').textContent = atEnd ? 'Restart' : 'Play';
+    bigPlay.querySelector('path').setAttribute('d', atEnd ? ICON_RESTART : ICON_PLAY);
+    bigPlay.setAttribute('aria-label', atEnd ? 'Restart' : 'Play with sound');
+    pill.hidden = playing || !mid;
+    const idx = stepIdx(t);
+    if (idx !== capIdx) { capIdx = idx; $('capH').textContent = STEPS[idx].title; $('capP').textContent = STEPS[idx].desc; }
+  }
+  function toggle() { if (!playing && t >= DUR) t = 0; playing = !playing; last = null; sync(); }
+  stage.addEventListener('click', e => {
+    unlockAudio();
+    if (t >= DUR) { if (e.target.closest('#bigPlay')) toggle(); return; }
+    toggle();
+  });
+  document.addEventListener('keydown', e => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (e.code === 'Space' && tag !== 'button' && tag !== 'input') { e.preventDefault(); toggle(); }
+  });
+  function frame(ts) {
+    if (playing) {
+      if (last == null) last = ts;
+      const prev = t;
+      t = Math.min(DUR, t + Math.min(0.1, (ts - last) / 1000));
+      last = ts;
+      audioStep(prev, t);
+      if (t >= DUR) playing = false;
+      render(t); sync();
+    } else last = null;
+    requestAnimationFrame(frame);
+  }
+  function fitLabels() {
+    document.querySelectorAll('#slabs .lbl-t').forEach(el => {
+      el.style.fontSize = '';
+      let fs = parseFloat(getComputedStyle(el).fontSize);
+      while (el.getComputedTextLength() > 186 && fs > 12) { fs -= 1; el.style.fontSize = fs + 'px'; }
+    });
+  }
+  function sizeCode() {
+    const box = $('code'), keep = box.innerHTML;
+    stage.style.removeProperty('--code-h');
+    let max = 0;
+    STEPS.forEach(st => {
+      if (!st.code || st.bom) return;
+      box.innerHTML = st.code.split('\n').map((l, i) => `<span class="row"><span class="ln">${i + 1}</span>${colour(l, st.hl)}</span>`).join('');
+      max = Math.max(max, box.scrollHeight);
+    });
+    box.innerHTML = keep;
+    stage.style.setProperty('--code-h', max + 'px');
+  }
+  const relayout = () => { fitLabels(); sizeCode(); };
+  let rz = 0;
+  addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(relayout, 150); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
+  relayout();
+  window.__seek = s => { t = s; playing = false; render(t); sync(); };
+  render(t); sync();
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

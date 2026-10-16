@@ -10,6 +10,8 @@ One page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu in the
 
 The drawing packet printer at the top of the page runs in the browser on four made-up sample emails, including the cases it refuses or prints partially.
 
+`drawing-packet-printer.html` is a standalone animated walkthrough of how the packet printer is built, layer by layer with excerpts of its real code. It's linked from the packet printer demo and its entry in the tools list.
+
 ## Editing
 
 Tool write-ups live in the `TOOLS` array at the top of the script in `index.html`. Each entry has a name, a one-line summary, a `stat` (the headline number shown on the collapsed row), the stack, the problem, steps, results and links. Keep each field short: the collapsed rows are what most visitors read.

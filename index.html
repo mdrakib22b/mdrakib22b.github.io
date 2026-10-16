@@ -306,7 +306,7 @@ a { color: var(--blue); text-underline-offset: 3px; text-decoration-thickness: 1
         <div class="run-top">
           <div>
             <h2 class="run-title" id="run-title">Drawing packet printer, on a sample email</h2>
-            <p class="run-cap">An email arrives and six shop stations get their drawings. Pick a case and run it.</p>
+            <p class="run-cap">An email arrives and six shop stations get their drawings. Pick a case and run it, or <a href="drawing-packet-printer.html">see how it’s built</a>.</p>
           </div>
         </div>
         <div class="run-controls">
@@ -420,7 +420,10 @@ const TOOLS = [
     problem: 'Every packet meant saving, sorting and printing drawings for six shop stations, then a sign-off sheet by hand.',
     steps: ['New mail wakes an Outlook handler. Nothing polls.', 'Check the sender, subject and job number', 'Sort the PDFs and print sets for six stations', 'Build the sign-off sheet and tag the email'],
     results: ['14 packets in its first four weeks', '13 print jobs to 2 printers in 6 minutes on its first live run', 'Each email is claimed once, so nothing prints twice'],
-    links: [{ label: 'Run it at the top of the page', href: '#top' }]
+    links: [
+      { label: 'Run it at the top of the page', href: '#top' },
+      { label: 'See how it’s built', href: 'drawing-packet-printer.html' }
+    ]
   },
   {
     name: 'Overtime costing tool',
