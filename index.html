@@ -80,6 +80,22 @@ a { color: var(--blue); text-underline-offset: 3px; }
 .site-nav a:hover { color: var(--ink); text-decoration: underline; }
 .theme-btn { border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); font: 500 .875rem var(--font); padding: 5px 10px; border-radius: 2px; cursor: pointer; }
 
+/* Resume menu */
+.menu { position: relative; }
+.menu-btn { display: inline-flex; align-items: center; gap: 7px; border: 0; background: none; padding: 0; font: 500 1rem var(--font); color: var(--ink-2); cursor: pointer; }
+.menu-btn:hover, .menu-btn[aria-expanded="true"] { color: var(--ink); }
+.menu-btn::after { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .2s; }
+.menu-btn[aria-expanded="true"]::after { transform: translateY(1px) rotate(225deg); }
+.menu-pop { position: absolute; top: calc(100% + 12px); right: 0; z-index: 20; width: 17rem; max-width: calc(100vw - 32px); background: var(--sheet); border: 1.5px solid var(--ink); box-shadow: 4px 4px 0 var(--grid); }
+.menu-pop .file-id { display: flex; justify-content: space-between; gap: 10px; padding: 7px 12px; border-bottom: 1px solid var(--rule); font: .74rem var(--mono); color: var(--ink-2); }
+.site-nav .menu-pop a { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 12px; padding: 10px 12px; color: var(--ink); text-decoration: none; }
+.site-nav .menu-pop a + a { border-top: 1px solid var(--rule); }
+.site-nav .menu-pop a:hover, .site-nav .menu-pop a:focus-visible { background: var(--blue-tint); text-decoration: none; }
+.menu-pop a:focus-visible { outline-offset: -2px; }
+.menu-pop .act { font-weight: 600; }
+.menu-pop .sub { grid-column: 1; font-size: .82rem; color: var(--ink-2); }
+.menu-pop svg { grid-row: 1 / span 2; grid-column: 2; width: 18px; height: 18px; fill: none; stroke: var(--blue); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
 /* Shared */
 .sheet { background: var(--sheet); border: 1px solid var(--rule); box-shadow: inset 0 0 0 4px var(--sheet), inset 0 0 0 5px var(--rule); padding: 22px; }
 @media (max-width: 600px) { .sheet { padding: 16px; } }
@@ -306,6 +322,7 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
 .site-foot p { margin: 0; color: var(--ink-2); }
 .contact { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 1.05rem; }
 .contact a { font-weight: 600; }
+.contact .fmt { font-size: .85rem; color: var(--ink-2); }
 .fine { font-size: .85rem; color: var(--ink-2); margin-top: 22px !important; }
 </style>
 </head>
@@ -322,6 +339,22 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
         <li><a href="#notes">Notes</a></li>
         <li><a href="#other">Other work</a></li>
         <li><a href="#contact">Contact</a></li>
+        <li class="menu">
+          <button class="menu-btn" id="resume-btn" type="button" aria-expanded="false" aria-controls="resume-menu">Resume</button>
+          <div class="menu-pop" id="resume-menu" hidden>
+            <div class="file-id"><span>Md_Rakib_Resume.pdf</span><span>1 pg</span></div>
+            <a href="Md_Rakib_Resume.pdf" target="_blank" rel="noopener">
+              <span class="act">View</span>
+              <span class="sub">Opens in a new tab</span>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 3h6v6M17 3l-8 8M14 12v5H3V6h5"/></svg>
+            </a>
+            <a href="Md_Rakib_Resume.pdf" download="Md_Rakib_Resume.pdf">
+              <span class="act">Download</span>
+              <span class="sub">PDF, 285 KB</span>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M5.5 8.5 10 13l4.5-4.5M3 17h14"/></svg>
+            </a>
+          </div>
+        </li>
       </ul>
       <button class="theme-btn" id="theme" type="button">Blueprint view</button>
     </nav>
@@ -530,6 +563,7 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
     </div>
     <ul class="contact">
       <li><a href="https://www.linkedin.com/in/mdrakib22b/">LinkedIn</a></li>
+      <li><a href="Md_Rakib_Resume.pdf" target="_blank" rel="noopener">Resume</a> <span class="fmt">(PDF)</span></li>
     </ul>
   </div>
   <div class="wrap"><p class="fine" style="padding-bottom:28px">One HTML file on GitHub Pages. Every name, job number and figure in the demos is made up.</p></div>
@@ -691,6 +725,43 @@ function largestRemainder(values) {
     sync();
   });
   sync();
+})();
+
+/* ------------------------------------------------------------------ resume menu */
+(function resumeMenu() {
+  const btn = $('resume-btn');
+  const pop = $('resume-menu');
+  const items = Array.from(pop.querySelectorAll('a'));
+  const isOpen = () => !pop.hidden;
+  function setOpen(on, focusFirst) {
+    pop.hidden = !on;
+    btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+    if (!on) return;
+    // On narrow screens the button can sit anywhere in the wrapped nav, so keep the panel on screen.
+    pop.style.right = '0';
+    const r = pop.getBoundingClientRect();
+    if (r.left < 16) pop.style.right = (r.left - 16) + 'px';
+    if (focusFirst) items[0].focus();
+  }
+  btn.addEventListener('click', () => setOpen(!isOpen()));
+  btn.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(true, true); }
+  });
+  pop.addEventListener('keydown', (e) => {
+    const i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+  });
+  items.forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen()) { setOpen(false); btn.focus(); }
+  });
+  document.addEventListener('click', (e) => {
+    if (isOpen() && !btn.contains(e.target) && !pop.contains(e.target)) setOpen(false);
+  });
+  pop.addEventListener('focusout', (e) => {
+    if (e.relatedTarget && !pop.contains(e.relatedTarget) && e.relatedTarget !== btn) setOpen(false);
+  });
 })();
 
 /* ------------------------------------------------------------------ tabs */

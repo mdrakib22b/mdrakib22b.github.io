@@ -6,7 +6,7 @@ Live at https://mdrakib22b.github.io
 
 ## What's here
 
-One file, `index.html`. No build step, no framework, no backend. The only outside request is Google Fonts, and the page still works without it.
+One page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu in the header and the footer link to. No build step, no framework, no backend. The only outside request is Google Fonts, and the page still works without it.
 
 The demos run in the browser on made-up data:
 
@@ -18,6 +18,8 @@ The demos run in the browser on made-up data:
 ## Editing
 
 Tool write-ups live in the `TOOLS` array at the top of the script in `index.html`. Each entry has a name, summary, status, stack, problem, what was built, steps, results and links. The filter chips are generated from the `stack` values.
+
+To update the resume, replace `Md_Rakib_Resume.pdf` with a file of the same name. If the size changes much, update the "PDF, 285 KB" note in the Resume menu.
 
 ## Deploying on GitHub Pages
 
