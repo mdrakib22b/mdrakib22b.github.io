@@ -165,11 +165,6 @@ a { color: var(--blue); text-underline-offset: 3px; }
 .run-result { margin: 14px 0 0; font-weight: 600; min-height: 1.5em; }
 
 /* Register */
-.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; align-items: center; }
-.filters .lbl { font-size: .92rem; color: var(--ink-2); margin-right: 4px; }
-.chip { border: 1px solid var(--rule); background: var(--sheet); padding: 4px 11px; border-radius: 999px; font: 500 .875rem var(--font); color: var(--ink); cursor: pointer; }
-.chip:hover { border-color: var(--ink-2); }
-.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .register { border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); background: var(--sheet); }
 .tool + .tool { border-top: 1px solid var(--rule); }
 .tool-head {
@@ -180,13 +175,12 @@ a { color: var(--blue); text-underline-offset: 3px; }
 }
 .tool-head:hover { background: var(--blue-tint); }
 @media (min-width: 900px) {
-  .tool-head { grid-template-columns: minmax(0, 1.7fr) 150px minmax(0, 1fr) 20px; grid-template-areas: "main status tags chev"; align-items: center; }
+  .tool-head { grid-template-columns: minmax(0, 1.7fr) 180px minmax(0, 1fr) 20px; grid-template-areas: "main status tags chev"; align-items: center; }
 }
 .tool-main { grid-area: main; }
 .tool-name { font-family: var(--display); font-weight: 600; font-size: 1.45rem; line-height: 1.15; display: block; }
 .tool-sum { color: var(--ink-2); font-size: .98rem; display: block; margin-top: 2px; }
-.tool-status { grid-area: status; font-size: .9rem; font-weight: 500; }
-.tool-status::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); margin-right: 8px; vertical-align: 1px; }
+.tool-stat { grid-area: status; font-family: var(--display); font-weight: 600; font-size: 1.15rem; line-height: 1.15; color: var(--blue); }
 .tags { grid-area: tags; display: flex; flex-wrap: wrap; gap: 5px; }
 .tag { font-size: .8rem; padding: 1px 8px; border: 1px solid var(--rule); border-radius: 999px; color: var(--ink-2); background: var(--paper); }
 .chev { grid-area: chev; width: 14px; height: 14px; justify-self: end; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(45deg) translate(-3px, -3px); transition: transform .2s; }
@@ -366,8 +360,7 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
     <div class="wrap hero-grid">
       <div>
         <h1>Tools that take the busywork out of a fabrication shop.</h1>
-        <p class="lede">I coordinate heat exchanger and pressure vessel jobs at a fabrication shop in Edmonton, and I automate the parts of the work that repeat.</p>
-        <p class="lede">I build in Python, PowerShell and Power Automate, on top of the Excel logs and Outlook inboxes the shop already runs on. Most of what's below is in daily use by my team.</p>
+        <p class="lede">I coordinate heat exchanger jobs in Edmonton and automate the work that repeats. Most of what's here is in daily use by my team.</p>
         <div class="cta-row">
           <a class="btn primary" href="#tools">See the tools</a>
           <a class="btn" href="#try">Try the demos</a>
@@ -384,7 +377,7 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
         <div class="run-top">
           <div>
             <h2 class="run-title" id="run-title">Drawing packet printer, on a sample email</h2>
-            <p class="run-cap">An Issued for Construction email arrives. Six shop stations get their drawings. Pick a case and run it.</p>
+            <p class="run-cap">An email arrives and six shop stations get their drawings. Pick a case and run it.</p>
           </div>
         </div>
         <div class="run-controls">
@@ -407,17 +400,15 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
   <section class="section" id="tools" aria-labelledby="tools-h">
     <div class="wrap">
       <h2 id="tools-h">Tools in service</h2>
-      <p class="intro">Each one replaced a job someone did by hand. Open a row to see the problem, how it works and what changed. Figures are from my own logs. Where a time saving is an estimate, it says so.</p>
-      <div class="filters" id="filters" role="group" aria-label="Filter by what it's built with"></div>
+      <p class="intro">Each one replaced a job someone did by hand. Open a row for the details.</p>
       <div class="register" id="register"></div>
-      <p class="count-note" id="reg-count" aria-live="polite"></p>
     </div>
   </section>
 
   <section class="section" id="try" aria-labelledby="try-h">
     <div class="wrap">
       <h2 id="try-h">Try them</h2>
-      <p class="intro">Working versions of three tools, running in your browser on made-up data. The real ones run on company files, so none of that data is here.</p>
+      <p class="intro">Three of the tools, running in your browser on made-up data.</p>
       <div class="tabs" role="tablist" aria-label="Demos">
         <button class="tab" role="tab" id="tab-dc" aria-controls="panel-dc" aria-selected="true">Document follow-up</button>
         <button class="tab" role="tab" id="tab-ot" aria-controls="panel-ot" aria-selected="false" tabindex="-1">Overtime costing</button>
@@ -425,7 +416,7 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
       </div>
 
       <div class="panel" role="tabpanel" id="panel-dc" aria-labelledby="tab-dc" tabindex="0">
-        <p class="panel-intro">Every document a client hasn't returned, and every revision we owe back, on one chart. Move the limits and the follow-up list rebuilds. The real dashboard does this for 5,000+ documents.</p>
+        <p class="panel-intro">Move the limits and the follow-up list rebuilds.</p>
         <div class="ctrls">
           <div class="ctrl">
             <label for="dc-client">Client review allowance</label>
@@ -458,7 +449,7 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
       </div>
 
       <div class="panel" role="tabpanel" id="panel-ot" aria-labelledby="tab-ot" tabindex="0" hidden>
-        <p class="panel-intro">The weekly overtime request, filled in during the meeting. Toggle shifts and headcount and watch the cost, the client split and the approval email update. Then compare against the spreadsheet it replaced.</p>
+        <p class="panel-intro">Toggle shifts and the cost, client split and approval email update.</p>
         <div class="ot-grid">
           <div class="ot-main">
             <div class="ctrls" style="margin-bottom:10px">
@@ -481,7 +472,7 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
       </div>
 
       <div class="panel" role="tabpanel" id="panel-tube" aria-labelledby="tab-tube" tabindex="0" hidden>
-        <p class="panel-intro">Quality control logs a 10% sample of rolled tubes by row and hole. The procedure spreads the sample across the tubesheet and checks that every location it writes actually exists. Point at a hole to read its location.</p>
+        <p class="panel-intro">A 10% inspection sample, spread across the tubesheet, with every location checked to exist.</p>
         <div class="tube-grid">
           <div>
             <div id="tube-svg"></div>
@@ -500,7 +491,7 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
               <button class="linklike" type="button" id="tube-bad">Try an impossible one</button>
             </div>
             <p class="verdict" id="tube-verdict" role="status" aria-live="polite"></p>
-            <p class="count-note">On a 1,612-tube exchanger the sample is about 480 locations once it's written into all three parts of the log. Typing those by hand is where a location that can't exist slips in. This check caught one in a signed reference log.</p>
+            <p class="count-note">This check caught an impossible location in a signed reference log.</p>
           </div>
         </div>
       </div>
@@ -510,13 +501,10 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
   <section class="section" id="notes" aria-labelledby="notes-h">
     <div class="wrap">
       <h2 id="notes-h">What building them taught me</h2>
-      <p class="intro">Each of these came from something breaking.</p>
       <div class="notes">
-        <div class="note"><h3>Wait for an event. Don't poll.</h3><p>The packet printer runs only when mail arrives. Between emails nothing is running at all. A scheduled task checking the inbox every few minutes would have run all day for something that happens a few times.</p></div>
-        <div class="note"><h3>Check the parse before building on it</h3><p>The first dashboard read the wrong column and hid four real follow-ups. I only caught it because the list looked too short. Now every parser gets checked against the source file before anything is built on top of it.</p></div>
-        <div class="note"><h3>Anything from an email is untrusted</h3><p>A folder link in an email body is only opened if it sits under a known root and names the job in the subject. The handler behind a clickable link assumes hostile input and never runs a file.</p></div>
-        <div class="note"><h3>Publish a clean copy, never a branch</h3><p>Work code goes public as a new repository with fresh history, renamed terms and generated data. A spreadsheet is a zip file, so the scan for leftovers goes inside the binaries too.</p></div>
-        <div class="note"><h3>Time the old way first</h3><p>Most of my before numbers are estimates. They make the case for the work, so next time I'll measure the manual process before I replace it.</p></div>
+        <div class="note"><h3>Wait for an event. Don't poll.</h3><p>The packet printer runs only when mail arrives, instead of checking the inbox all day.</p></div>
+        <div class="note"><h3>Check the parse before building on it</h3><p>The first dashboard read the wrong column and hid four real follow-ups.</p></div>
+        <div class="note"><h3>Time the old way first</h3><p>Most of my before numbers are estimates. Next time I'll measure the manual process before replacing it.</p></div>
       </div>
     </div>
   </section>
@@ -524,18 +512,17 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
   <section class="section" id="other" aria-labelledby="other-h">
     <div class="wrap">
       <h2 id="other-h">Before this, and on my own time</h2>
-      <p class="intro">I came to fabrication from ERP implementation at a manufacturer, where the job was moving messy operational data into a system that could use it.</p>
       <div class="other">
         <article class="sheet">
           <h3>Bill of material migration</h3>
           <p class="where">Sico Paints, ERP functional consultant, 2024 to 2026</p>
-          <p>A Python script that parsed CSV bills of material into JSON matched to the ERP's API schema and imported them over REST. 170+ bills of material loaded in hours instead of weeks of manual entry, as part of a go-live across 4 locations and 20+ users.</p>
+          <p>A Python script that loaded 170+ bills of material into the new ERP over its REST API. Hours instead of weeks of manual entry, for a go-live across 4 locations.</p>
           <div class="tags"><span class="tag">Python</span><span class="tag">REST APIs</span><span class="tag">Postman</span><span class="tag">Data migration</span></div>
         </article>
         <article class="sheet">
           <h3>Ni'ma, a personal finance app</h3>
           <p class="where">Side project, built for my own use</p>
-          <p>Net worth, budgets, investments, debt and savings goals in one installable web app. No framework and no backend. All data stays in the browser, with optional AES-256-GCM encryption at rest. A small serverless function fetches prices and exchange rates, and headless browser smoke tests cover the main flows.</p>
+          <p>Net worth, budgets, investments and savings goals in one installable web app. All data stays in the browser, optionally encrypted.</p>
           <div class="tags"><span class="tag">JavaScript</span><span class="tag">PWA</span><span class="tag">Web Crypto</span><span class="tag">Serverless</span></div>
           <div class="tool-links"><a href="https://nima-three-bay.vercel.app/">Open the app</a></div>
         </article>
@@ -579,13 +566,12 @@ table.ot .client { color: var(--ink-2); font-size: .85rem; display: block; }
 const TOOLS = [
   {
     name: 'Document follow-up dashboard',
-    summary: "One page that shows which documents a client is sitting on, and which revisions we owe back.",
-    status: 'Team uses it',
+    summary: 'Shows which documents a client is sitting on, and which revisions we owe back.',
+    stat: '5,000+ documents tracked',
     stack: ['Python', 'PowerShell', 'JavaScript', 'Excel', 'Outlook'],
-    problem: "Document Control logs every drawing and inspection plan in two Excel workbooks, one sheet per job. Finding out what a client still had meant reading job sheets by hand. Nothing watched the revisions we owed after a client returned a document with comments.",
-    built: "A Python pipeline that copies both logs, parses every sheet without hard-coded column letters, decides where each document is in its approval cycle, and writes one self-contained HTML page. PowerShell rebuilds it hourly on weekdays and lets links in the page open a job folder or a ready-to-send Outlook draft.",
-    steps: ['Snapshot both logs off the network share', 'Parse 300+ job sheets, finding columns by header text', 'Link each transmittal to its sent and received folders', 'Place every document in one of eleven stages', 'Group overdue items into one follow-up email each', 'Publish one offline HTML page, swapped in atomically'],
-    results: ['5,000+ documents across 312 job sheets on one page', '210 client and 80 internal follow-ups named in a single run', '98% of transmittals linked to their folders automatically', 'Skips the rebuild in half a second when nothing has changed', 'Found 4 follow-ups the first version had hidden by reading the wrong column'],
+    problem: 'Finding out what a client still had meant reading 300+ Excel job sheets by hand.',
+    steps: ['Parse every job sheet, finding columns by header text', 'Place each document in one of eleven approval stages', 'Draft one follow-up email per overdue batch', 'Rebuild one offline HTML page every hour'],
+    results: ['5,000+ documents across 312 job sheets on one page', '210 client and 80 internal follow-ups in a single run', '98% of transmittals linked to their folders automatically'],
     links: [
       { label: 'Live demo', href: 'https://mdrakib22b.github.io/document-control-tracker/' },
       { label: 'Source code', href: 'https://github.com/mdrakib22b/document-control-tracker' },
@@ -595,78 +581,71 @@ const TOOLS = [
   {
     name: 'Drawing packet printer',
     summary: 'An Issued for Construction email arrives and the shop’s drawing packets print themselves.',
-    status: 'Team uses it',
+    stat: '~10–15 min saved per packet',
     stack: ['Python', 'PowerShell', 'VBA', 'Outlook', 'Excel'],
-    problem: 'Each Issued for Construction email meant saving attachments, sorting PDFs, printing a letter and a ledger set for six shop stations, then building a sign-off sheet by hand. Ten to fifteen minutes a packet, several times a day.',
-    built: 'An Outlook event, not a polling loop. New mail wakes a VBA handler, which starts a PowerShell runner, which calls Python. Python checks the sender and subject, sorts the drawings, prints to two printers in station order, fills the sign-off sheet from the drawing register, and tags the email with the result. Nothing runs between emails.',
-    steps: ['Outlook raises an event on new mail', 'Check the sender list, a subject keyword and exactly one job number', 'Refuse replies and forwards so nothing prints twice', 'Save attachments and sort the PDFs by document type', 'Print letter and ledger sets for six stations on two printers', 'Build the sign-off sheet and tag the email printed or failed'],
-    results: ['14 packets in its first four weeks', '3 printed start to finish with nobody involved', 'First live packet sent 13 print jobs to 2 printers in 6 minutes', 'Each email is claimed once by its message ID, so a restart can’t print twice', 'Failures land in an exceptions folder with the reason written down'],
+    problem: 'Every packet meant saving, sorting and printing drawings for six shop stations, then a sign-off sheet by hand.',
+    steps: ['New mail wakes an Outlook handler. Nothing polls.', 'Check the sender, subject and job number', 'Sort the PDFs and print sets for six stations', 'Build the sign-off sheet and tag the email'],
+    results: ['14 packets in its first four weeks', '13 print jobs to 2 printers in 6 minutes on its first live run', 'Each email is claimed once, so nothing prints twice'],
     links: [{ label: 'Run it at the top of the page', href: '#top' }]
   },
   {
     name: 'Overtime costing tool',
     summary: 'Builds the weekly overtime approval email live in the meeting, costed and split by client.',
-    status: 'Used every week',
+    stat: '~80 min a week saved',
     stack: ['JavaScript', 'Python', 'PowerShell', 'Outlook'],
-    problem: 'The weekly overtime request was rebuilt from meeting notes afterwards. Trades, headcounts, costs and client names were all reconstructed by hand, then checked line by line.',
-    built: 'A single offline HTML page. Python exports the job list to a script the page can read, so it fills in the client for any job without uploading anything. Shifts are toggled per trade and day, the cost math runs as you type, and one button opens a signed Outlook draft.',
-    steps: ['Export the job list to a local data file', 'Enter each job, trade, headcount and shift during the meeting', 'Cost every line at time and a half and double time', 'Split the total by client with percentages that always add to 100', 'Open a ready-to-send Outlook draft with the signature intact'],
-    results: ['About 80 minutes a week of after-meeting work gone (my estimate)', 'Client lookup across 1,442 jobs', 'Showed the old spreadsheet had left 37% of one week’s cost out of the client split', '177 spellings of customer names merged into 109'],
+    problem: 'The weekly overtime request was rebuilt by hand from meeting notes, then checked line by line.',
+    steps: ['Enter jobs, trades and shifts during the meeting', 'Cost every line at time and a half and double time', 'Split the total by client', 'Open a ready-to-send Outlook draft'],
+    results: ['About 80 minutes a week of after-meeting work gone (my estimate)', 'Found the old spreadsheet had left 37% of one week’s cost out of the client split', 'Client lookup across 1,442 jobs'],
     links: [{ label: 'Try the costing demo', tab: 'tab-ot' }]
   },
   {
     name: 'Network document register',
-    summary: 'A searchable index of every file across seven network folders, built in about a minute.',
-    status: 'Refreshable',
+    summary: 'A searchable index of every file across seven network folders.',
+    stat: '2,040 files in 1 minute',
     stack: ['PowerShell', 'Power Query', 'Excel'],
-    problem: 'A handover needed a register of what lived where. The first pass, screenshots and typing, took two hours and found 110 files.',
-    built: 'A PowerShell script walks seven network locations and writes the path, size and date of every file. Power Query shapes that into a master index with clickable links, then compares it against the procedure manual’s own list.',
-    steps: ['Walk seven network locations with PowerShell', 'Write path, size and date for every file', 'Shape it into a master index with Power Query', 'Match it against the procedure manual’s list'],
-    results: ['2,040 files indexed in about one minute', 'Replaced an estimated 15 to 20 hours of typing', '1,366 clickable file links in the final index', 'Flagged 112 listed procedures with no live copy', 'Refreshes with one click instead of starting over'],
+    problem: 'A handover needed a register of what lived where. Two hours of screenshots and typing found 110 files.',
+    steps: ['Walk seven network folders with PowerShell', 'Build a linked master index in Power Query', 'Match it against the procedure manual'],
+    results: ['2,040 files indexed in about a minute', 'Replaced an estimated 15 to 20 hours of typing', 'Flagged 112 listed procedures with no live copy'],
     links: []
   },
   {
     name: 'SharePoint bulk loader',
-    summary: 'Loaded a whole contract register into a SharePoint list in two minutes.',
-    status: 'Reusable',
+    summary: 'Loaded a whole contract register into a SharePoint list.',
+    stat: '168 records in 2 minutes',
     stack: ['Power Automate', 'Power Fx', 'SharePoint', 'Excel'],
-    problem: '168 contract records had to go into a SharePoint list through its form, one record at a time, thirteen fields each.',
-    built: 'A Power Automate flow reads the cleaned Excel table, converts each field with Power Fx expressions and creates the list items. I tested it on a handful of rows before the full run.',
-    steps: ['Clean and validate the source table in Excel', 'Map thirteen fields with Power Fx', 'Test on a small batch', 'Run the full load'],
+    problem: '168 contracts had to go into a SharePoint form one at a time, thirteen fields each.',
+    steps: ['Clean the source table in Excel', 'Map thirteen fields with Power Fx', 'Test on a small batch, then run it all'],
     results: ['168 records in 2 minutes 9 seconds', 'Replaced about a day of form entry', 'Reusable for the next import'],
     links: []
   },
   {
     name: 'Tube rolling log procedure',
     summary: 'Turns a tubesheet layout into a 10% inspection sample and checks every location is real.',
-    status: 'Quality control runs it',
+    stat: '~480 locations no longer typed',
     stack: ['Excel', 'Data validation'],
-    problem: 'Quality control logs a 10% sample of rolled tubes. On a 1,612-tube exchanger that meant hand-typing about 480 row-and-hole locations across three parts of the log.',
-    built: 'One written procedure quality control runs per job. It counts the layout, spreads the sample across the tubesheet, writes the locations into the log and checks each one against the layout.',
-    steps: ['Count holes per row from the layout', 'Spread a 10% sample across the tubesheet', 'Write the locations into all three parts of the log', 'Check every location against the layout'],
-    results: ['About 480 hand-typed locations gone on a 1,612-tube exchanger', 'Caught a location that could not exist in a signed reference log', 'Proven on layouts from 351 to 2,393 tubes'],
+    problem: 'A 1,612-tube exchanger meant hand-typing about 480 row-and-hole locations into the quality log.',
+    steps: ['Count holes per row from the layout', 'Spread a 10% sample across the tubesheet', 'Check every location against the layout'],
+    results: ['Caught a location that could not exist in a signed reference log', 'Proven on layouts from 351 to 2,393 tubes', 'Quality control runs it on every job'],
     links: [{ label: 'Try the sample check', tab: 'tab-tube' }]
   },
   {
     name: 'Field inspection form',
     summary: 'An air cooler inspection checklist that keeps its layout when photos go in.',
-    status: 'Team uses it',
+    stat: 'Same 6-page report every time',
     stack: ['JavaScript', 'HTML and CSS'],
-    problem: 'Field inspections were filled into a Word checklist. Adding photos reflowed the document, so every report came back looking different.',
-    built: 'A single offline HTML file with drag-and-drop photo slots, unit tags and signatures, printing to a fixed six-page layout.',
-    steps: ['Fill in 31 inspection points, each with a comment', 'Drop photos into fixed slots', 'Sign and print to six pages'],
-    results: ['31 inspection points with a comment field on every line', 'The same six-page report for every unit', 'Works offline in the field with nothing to install'],
+    problem: 'Adding photos to the Word checklist reflowed it, so every report came back looking different.',
+    steps: ['Fill in 31 inspection points', 'Drop photos into fixed slots', 'Sign and print'],
+    results: ['The same six-page report for every unit', 'Works offline in the field with nothing to install'],
     links: []
   },
   {
     name: 'New job handoff',
     summary: 'One email that tells every department what was sold and what they owe on day one.',
-    status: 'Every new job',
+    stat: '40+ jobs announced',
     stack: ['Excel', 'Outlook'],
-    problem: 'When a purchase order came in, each department chased Commercial separately for the same scope, delivery and terms.',
-    built: 'A standard handoff, checked line by line against the quote and the estimate before it goes out, with a named action for each department.',
-    steps: ['Check the purchase order against the quote and estimate', 'Pull scope, delivery, terms and materials into one format', 'Assign an action to each department', 'Send to the whole project team'],
-    results: ['40+ new jobs announced', 'About 30 recipients across every department', 'Mismatches between quote and purchase order caught before work starts'],
+    problem: 'Every department chased Commercial separately for the same scope, delivery and terms.',
+    steps: ['Check the purchase order against the quote', 'Pull scope, delivery and terms into one format', 'Assign an action to each department'],
+    results: ['40+ new jobs announced to about 30 people', 'Quote and purchase order mismatches caught before work starts'],
     links: []
   }
 ];
@@ -794,26 +773,12 @@ function openDemo(tabId) {
 /* ------------------------------------------------------------------ register */
 (function register() {
   const reg = $('register');
-  const filters = $('filters');
-  const countEl = $('reg-count');
-  const counts = {};
-  TOOLS.forEach((t) => t.stack.forEach((s) => { counts[s] = (counts[s] || 0) + 1; }));
-  const stacks = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
-  let active = 'All';
 
-  filters.append(h('span', { class: 'lbl' }, 'Built with'));
-  ['All', ...stacks].forEach((s) => {
-    filters.append(h('button', {
-      class: 'chip', type: 'button', 'aria-pressed': s === 'All' ? 'true' : 'false', 'data-stack': s,
-      onclick: () => { active = s; apply(); }
-    }, s));
-  });
-
-  const rows = TOOLS.map((t, i) => {
+  TOOLS.forEach((t, i) => {
     const bodyId = 'tool-body-' + i;
     const head = h('button', { class: 'tool-head', type: 'button', 'aria-expanded': 'false', 'aria-controls': bodyId },
       h('span', { class: 'tool-main' }, h('span', { class: 'tool-name' }, t.name), h('span', { class: 'tool-sum' }, t.summary)),
-      h('span', { class: 'tool-status' }, t.status),
+      h('span', { class: 'tool-stat' }, t.stat),
       h('span', { class: 'tags' }, t.stack.map((s) => h('span', { class: 'tag' }, s))),
       h('span', { class: 'chev', 'aria-hidden': 'true' })
     );
@@ -822,8 +787,7 @@ function openDemo(tabId) {
       : h('a', { href: l.href }, l.label));
     const body = h('div', { class: 'tool-body', id: bodyId, hidden: true },
       h('div', {},
-        h('h3', {}, 'The problem'), h('p', {}, t.problem),
-        h('h3', {}, 'What I built'), h('p', {}, t.built)
+        h('h3', {}, 'The problem'), h('p', {}, t.problem)
       ),
       h('div', {}, h('h3', {}, 'How it works'), h('ol', { class: 'flow' }, t.steps.map((s) => h('li', {}, s)))),
       h('div', {},
@@ -837,26 +801,8 @@ function openDemo(tabId) {
       head.setAttribute('aria-expanded', open ? 'false' : 'true');
       body.hidden = open;
     });
-    const row = h('article', { class: 'tool' }, head, body);
-    reg.append(row);
-    return { row, tool: t };
+    reg.append(h('article', { class: 'tool' }, head, body));
   });
-
-  function apply() {
-    filters.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', c.dataset.stack === active ? 'true' : 'false'));
-    let shown = 0;
-    rows.forEach(({ row, tool }) => {
-      const on = active === 'All' || tool.stack.includes(active);
-      row.hidden = !on;
-      if (on) shown++;
-    });
-    countEl.textContent = active === 'All'
-      ? TOOLS.length + ' tools.'
-      : 'Showing ' + shown + ' of ' + TOOLS.length + ' tools built with ' + active + '.';
-  }
-  // Open the first row so the page shows what a case study looks like.
-  rows[0].row.querySelector('.tool-head').click();
-  apply();
 })();
 
 /* ------------------------------------------------------------------ packet printer */

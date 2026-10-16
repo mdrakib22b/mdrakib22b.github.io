@@ -17,7 +17,7 @@ The demos run in the browser on made-up data:
 
 ## Editing
 
-Tool write-ups live in the `TOOLS` array at the top of the script in `index.html`. Each entry has a name, summary, status, stack, problem, what was built, steps, results and links. The filter chips are generated from the `stack` values.
+Tool write-ups live in the `TOOLS` array at the top of the script in `index.html`. Each entry has a name, a one-line summary, a `stat` (the headline number shown on the collapsed row), the stack, the problem, steps, results and links. Keep each field short: the collapsed rows are what most visitors read.
 
 To update the resume, replace `Md_Rakib_Resume.pdf` with a file of the same name. If the size changes much, update the "PDF, 285 KB" note in the Resume menu.
 
