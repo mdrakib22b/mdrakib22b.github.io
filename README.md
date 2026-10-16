@@ -12,6 +12,8 @@ The main page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu i
 
 `document-follow-up-tracker.html` does the same for the Document follow-up tracker, linked the same way.
 
+`page-transition.js` plays the transition between pages: a jagged marker scribble paints the screen, then a second one wipes it away to reveal the next page. Every page loads it with `<script src="page-transition.js"></script>` straight after `<body>`, so add that line to any new page. It skips links within a page, new-tab links and the PDF, and turns off when the visitor's system asks for reduced motion.
+
 ## Editing
 
 Tool write-ups live in the `TOOLS` array at the top of the script in `index.html`. Each entry has a name, a one-line summary, a `stat` (the headline number shown on the collapsed row), the stack, the problem, steps, results and links, plus an optional `walkthrough` page shown under the steps. Keep each field short: the collapsed rows are what most visitors read.
