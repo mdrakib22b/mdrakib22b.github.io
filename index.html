@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Md Rakib | Tools for a fabrication shop</title>
-<meta name="description" content="Automation tools built by Md Rakib, a project coordinator in Edmonton. Document tracking, drawing packet printing, overtime costing and more, with a live demo on sample data.">
+<meta name="description" content="Automation tools built by Md Rakib, a project coordinator in Edmonton. Document tracking, the IFC Drawing packet printer, overtime costing and more, with a live demo on sample data.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -137,7 +137,7 @@ a { color: var(--blue); text-underline-offset: 3px; text-decoration-thickness: 1
 .titleblock dt { font-size: .74rem; color: var(--ink-2); }
 .titleblock dd { margin: 0; font-weight: 500; font-size: .94rem; }
 
-/* Packet printer run */
+/* IFC Drawing packet printer run */
 .run-top { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .run-title { font-weight: 600; font-size: 1.08rem; letter-spacing: -.015em; margin: 0; }
 .run-cap { color: var(--ink-2); font-size: .92rem; margin: 2px 0 0; }
@@ -305,8 +305,8 @@ a { color: var(--blue); text-underline-offset: 3px; text-decoration-thickness: 1
       <div class="sheet" aria-labelledby="run-title">
         <div class="run-top">
           <div>
-            <h2 class="run-title" id="run-title">Drawing packet printer, on a sample email</h2>
-            <p class="run-cap">An email arrives and six shop stations get their drawings. Pick a case and run it, or <a href="drawing-packet-printer.html">see how it’s built</a>.</p>
+            <h2 class="run-title" id="run-title">IFC Drawing packet printer, on a sample email</h2>
+            <p class="run-cap">An email arrives and six shop stations get their drawings. Pick a case and run it, or <a href="ifc-drawing-packet-printer.html">see how it’s built</a>.</p>
           </div>
         </div>
         <div class="run-controls">
@@ -338,7 +338,7 @@ a { color: var(--blue); text-underline-offset: 3px; text-decoration-thickness: 1
     <div class="wrap">
       <h2 id="notes-h">What building them taught me</h2>
       <div class="notes">
-        <div class="note"><h3>Wait for an event. Don't poll.</h3><p>The packet printer runs only when mail arrives, instead of checking the inbox all day.</p></div>
+        <div class="note"><h3>Wait for an event. Don't poll.</h3><p>The IFC Drawing packet printer runs only when mail arrives, instead of checking the inbox all day.</p></div>
         <div class="note"><h3>Check the parse before building on it</h3><p>The first dashboard read the wrong column and hid four real follow-ups.</p></div>
         <div class="note"><h3>Time the old way first</h3><p>Most of my before numbers are estimates. Next time I'll measure the manual process before replacing it.</p></div>
       </div>
@@ -413,7 +413,7 @@ const TOOLS = [
     ]
   },
   {
-    name: 'Drawing packet printer',
+    name: 'IFC Drawing packet printer',
     summary: 'An Issued for Construction email arrives and the shop’s drawing packets print themselves.',
     stat: '~10–15 min saved per packet',
     stack: ['Python', 'PowerShell', 'VBA', 'Outlook', 'Excel'],
@@ -422,7 +422,7 @@ const TOOLS = [
     results: ['14 packets in its first four weeks', '13 print jobs to 2 printers in 6 minutes on its first live run', 'Each email is claimed once, so nothing prints twice'],
     links: [
       { label: 'Run it at the top of the page', href: '#top' },
-      { label: 'See how it’s built', href: 'drawing-packet-printer.html' }
+      { label: 'See how it’s built', href: 'ifc-drawing-packet-printer.html' }
     ]
   },
   {
@@ -592,7 +592,7 @@ function h(tag, attrs, ...kids) {
   });
 })();
 
-/* ------------------------------------------------------------------ packet printer */
+/* ------------------------------------------------------------------ IFC Drawing packet printer */
 (function packetPrinter() {
   const STATIONS = ['Bundle shop', 'Welding shop 1', 'Welding shop 2', 'Shop foreman', 'Machine shop', 'Prep shop'];
   const STEPS = [

@@ -8,9 +8,9 @@ Live at https://mdrakib22b.github.io
 
 One page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu in the header and the footer link to. No build step, no framework, no backend. The only outside request is Google Fonts, and the page still works without it.
 
-The drawing packet printer at the top of the page runs in the browser on four made-up sample emails, including the cases it refuses or prints partially.
+The IFC Drawing packet printer at the top of the page runs in the browser on four made-up sample emails, including the cases it refuses or prints partially.
 
-`drawing-packet-printer.html` is a standalone animated walkthrough of how the packet printer is built, layer by layer with excerpts of its real code. It's linked from the packet printer demo and its entry in the tools list.
+`ifc-drawing-packet-printer.html` is a standalone animated walkthrough of how the IFC Drawing packet printer is built, layer by layer with excerpts of its real code. It's linked from the IFC Drawing packet printer demo and its entry in the tools list.
 
 ## Editing
 
