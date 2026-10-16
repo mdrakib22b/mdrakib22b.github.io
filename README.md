@@ -8,12 +8,7 @@ Live at https://mdrakib22b.github.io
 
 One page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu in the header and the footer link to. No build step, no framework, no backend. The only outside request is Google Fonts, and the page still works without it.
 
-The demos run in the browser on made-up data:
-
-- **Drawing packet printer.** Four sample emails, including the cases it refuses or prints partially.
-- **Document follow-up.** Move the review limits and the follow-up list and email drafts rebuild.
-- **Overtime costing.** Toggle shifts and headcount and the approval email and client split update. Compare against the old spreadsheet's split.
-- **Tube sample check.** A 10% sample on a tubesheet layout, plus a check that rejects locations that can't exist.
+The drawing packet printer at the top of the page runs in the browser on four made-up sample emails, including the cases it refuses or prints partially.
 
 ## Editing
 
@@ -30,4 +25,4 @@ To update the resume, replace `Md_Rakib_Resume.pdf` with a file of the same name
 
 ## Before every publish
 
-Every name, job number and figure in the demos is fictional. Keep it that way. Before pushing, search the file for employer, client and colleague names, real job numbers, internal paths and dollar values, and remove anything that turns up.
+Every name, job number and figure in the demo is fictional. Keep it that way. Before pushing, search the file for employer, client and colleague names, real job numbers, internal paths and dollar values, and remove anything that turns up.
