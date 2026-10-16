@@ -8,13 +8,13 @@ Live at https://mdrakib22b.github.io
 
 The main page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu in the header and the footer link to. No build step, no framework, no backend. The only outside request is Google Fonts, and the page still works without it.
 
-`ifc-drawing-packet-printer.html` is a standalone animated walkthrough of how the IFC Drawing packet printer is built, layer by layer with excerpts of its real code. It's linked from the IFC Drawing packet printer's entry in the tools list.
+`ifc-drawing-packet-printer.html` is a standalone animated walkthrough of how the IFC Drawing packet printer is built, layer by layer with excerpts of its real code. It's linked from the IFC Drawing packet printer's entry in the tools list, under How it works.
 
-`document-follow-up-tracker.html` does the same for the Document follow-up tracker, linked from its entry in the tools list.
+`document-follow-up-tracker.html` does the same for the Document follow-up tracker, linked the same way.
 
 ## Editing
 
-Tool write-ups live in the `TOOLS` array at the top of the script in `index.html`. Each entry has a name, a one-line summary, a `stat` (the headline number shown on the collapsed row), the stack, the problem, steps, results and links. Keep each field short: the collapsed rows are what most visitors read.
+Tool write-ups live in the `TOOLS` array at the top of the script in `index.html`. Each entry has a name, a one-line summary, a `stat` (the headline number shown on the collapsed row), the stack, the problem, steps, results and links, plus an optional `walkthrough` page shown under the steps. Keep each field short: the collapsed rows are what most visitors read.
 
 To update the resume, replace `Md_Rakib_Resume.pdf` with a file of the same name. If the size changes much, update the "PDF, 285 KB" note in the Resume menu.
 
