@@ -108,15 +108,9 @@ a { color: var(--blue); text-underline-offset: 3px; text-decoration-thickness: 1
 .btn:active { transform: scale(.98); }
 .btn.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .btn.primary:hover { background: color-mix(in srgb, var(--ink) 86%, var(--paper)); }
-.btn.small { padding: 6px 12px; font-size: .88rem; }
 .section { padding: 104px 0 16px; scroll-margin-top: 64px; }
 .section h2 { font-weight: 600; font-size: clamp(1.75rem, 3.2vw, 2.5rem); line-height: 1.1; letter-spacing: -.032em; margin: 0 0 10px; background: var(--head-grad); -webkit-background-clip: text; background-clip: text; color: transparent; width: fit-content; }
 .section .intro { color: var(--ink-2); max-width: 44rem; margin: 0 0 28px; font-size: 1.05rem; }
-.seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; border: 1px solid var(--rule); border-radius: 9px; background: var(--paper); }
-.seg button { border: 0; border-radius: 7px; background: transparent; padding: 5px 11px; font: 500 .86rem var(--font); color: var(--ink-2); cursor: pointer; transition: background .2s, color .2s; }
-.seg button:hover { color: var(--ink); }
-.seg button[aria-pressed="true"] { background: var(--grid); color: var(--ink); box-shadow: inset 0 0 0 1px var(--rule); }
-
 /* Hero */
 .hero { position: relative; padding: 88px 0 24px; isolation: isolate; }
 .hero::before { content: ""; position: absolute; inset: -60px 0 auto; height: 720px; z-index: -1; pointer-events: none;
@@ -125,53 +119,10 @@ a { color: var(--blue); text-underline-offset: 3px; text-decoration-thickness: 1
   background-image: linear-gradient(var(--rule) 1px, transparent 1px), linear-gradient(90deg, var(--rule) 1px, transparent 1px); background-size: 48px 48px; opacity: .55;
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 30% 10%, #000 10%, transparent 70%); mask-image: radial-gradient(ellipse 70% 60% at 30% 10%, #000 10%, transparent 70%); }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
-@media (min-width: 1000px) { .hero-grid { grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: 56px; align-items: start; } }
 .hero h1 { font-weight: 600; font-size: clamp(2.5rem, 5.2vw, 4.1rem); line-height: 1.04; letter-spacing: -.042em; margin: 0 0 22px; max-width: 15ch; background: var(--head-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lede { font-size: 1.125rem; color: var(--ink-2); max-width: 32rem; margin: 0; }
 .lede + .lede { margin-top: 12px; }
-.cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 30px 0 36px; }
-.titleblock { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; background: color-mix(in srgb, var(--sheet) 80%, transparent); max-width: 32rem; margin: 0; }
-.titleblock > div { padding: 9px 14px; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
-.titleblock > div:nth-child(2n) { border-right: 0; }
-.titleblock > div:nth-last-child(-n+2) { border-bottom: 0; }
-.titleblock dt { font-size: .74rem; color: var(--ink-2); }
-.titleblock dd { margin: 0; font-weight: 500; font-size: .94rem; }
-
-/* IFC Drawing packet printer run */
-.run-top { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.run-title { font-weight: 600; font-size: 1.08rem; letter-spacing: -.015em; margin: 0; }
-.run-cap { color: var(--ink-2); font-size: .92rem; margin: 2px 0 0; }
-.run-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
-.mail { border: 1px solid var(--rule); border-left: 2px solid var(--blue); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; background: var(--paper); }
-.mail .from { font-size: .82rem; color: var(--ink-2); }
-.mail .subj { font-weight: 600; }
-.files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.file { font: .74rem var(--mono); padding: 2px 7px; border: 1px solid var(--rule); border-radius: 5px; background: var(--sheet); }
-.steps { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 7px; }
-.steps li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; color: var(--ink-2); font-size: .94rem; transition: color .3s; }
-.steps .ic { width: 20px; height: 20px; border: 1.5px solid var(--rule); border-radius: 50%; margin-top: 2px; display: grid; place-items: center; font-size: 12px; font-weight: 700; line-height: 1; transition: background .3s, border-color .3s, box-shadow .3s; }
-.steps li.active { color: var(--ink); }
-.steps li.active .ic { border-color: var(--blue); box-shadow: 0 0 0 4px var(--blue-tint); }
-.steps li.done { color: var(--ink); }
-.steps li.done .ic { background: var(--blue); border-color: var(--blue); color: var(--paper); }
-.steps li.fail { color: var(--ink); }
-.steps li.fail .ic { background: var(--red); border-color: var(--red); color: var(--paper); }
-.steps li.skip .ic { border-style: dashed; }
-.steps li.skip { opacity: .75; }
-.steps .step-note { display: block; font-size: .85rem; color: var(--ink-2); }
-.stations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-@media (max-width: 480px) { .stations { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.tray { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; background: var(--paper); min-height: 70px; }
-.tray .nm { font-size: .82rem; font-weight: 500; }
-.tray .pile { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px; min-height: 20px; align-items: flex-end; }
-.tray .pile i { display: block; width: 11px; height: 15px; border: 1px solid var(--ink-2); border-radius: 1px; background: var(--sheet); animation: drop .4s var(--ease); }
-.tray .pile i.ledger { width: 17px; height: 12px; }
-.tray .pile i.signoff { border-color: var(--blue); background: var(--blue-tint); }
-@keyframes drop { from { transform: translateY(-10px); opacity: 0; } to { transform: none; opacity: 1; } }
-.legend-mini { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .78rem; color: var(--ink-2); margin-top: 8px; }
-.legend-mini span { display: inline-flex; align-items: center; gap: 6px; }
-.legend-mini i { display: inline-block; border: 1px solid var(--ink-2); background: var(--sheet); }
-.run-result { margin: 14px 0 0; font-weight: 600; min-height: 1.5em; }
+.cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 30px 0 0; }
 
 /* Register */
 .register { border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; background: var(--sheet); }
@@ -294,34 +245,6 @@ a { color: var(--blue); text-underline-offset: 3px; text-decoration-thickness: 1
         <div class="cta-row">
           <a class="btn primary" href="#tools">See the tools</a>
         </div>
-        <dl class="titleblock" aria-label="About">
-          <div><dt>Drawn by</dt><dd>Md Rakib</dd></div>
-          <div><dt>Role</dt><dd>Project coordinator</dd></div>
-          <div><dt>Location</dt><dd>Edmonton, Alberta</dd></div>
-          <div><dt>Background</dt><dd>BSc Physics and Mathematics</dd></div>
-        </dl>
-      </div>
-
-      <div class="sheet" aria-labelledby="run-title">
-        <div class="run-top">
-          <div>
-            <h2 class="run-title" id="run-title">IFC Drawing packet printer, on a sample email</h2>
-            <p class="run-cap">An email arrives and six shop stations get their drawings. Pick a case and run it, or <a href="ifc-drawing-packet-printer.html">see how it’s built</a>.</p>
-          </div>
-        </div>
-        <div class="run-controls">
-          <div class="seg" role="group" aria-label="Sample email" id="run-cases"></div>
-          <button class="btn small primary" type="button" id="run-btn">Run</button>
-        </div>
-        <div class="mail" id="run-mail" aria-label="Sample email"></div>
-        <ol class="steps" id="run-steps"></ol>
-        <div class="stations" id="run-stations"></div>
-        <div class="legend-mini" aria-hidden="true">
-          <span><i style="width:9px;height:12px"></i>Drawing register, letter</span>
-          <span><i style="width:14px;height:10px"></i>Drawing, ledger</span>
-          <span><i style="width:9px;height:12px;border-color:var(--blue);background:var(--blue-tint)"></i>Sign-off sheet</span>
-        </div>
-        <p class="run-result" id="run-result" role="status" aria-live="polite"></p>
       </div>
     </div>
   </section>
@@ -389,7 +312,7 @@ a { color: var(--blue); text-underline-offset: 3px; text-decoration-thickness: 1
       <li><a href="Md_Rakib_Resume.pdf" target="_blank" rel="noopener">Resume</a> <span class="fmt">(PDF)</span></li>
     </ul>
   </div>
-  <div class="wrap"><p class="fine" style="padding-bottom:28px">One HTML file on GitHub Pages. Every name and job number in the demo is made up.</p></div>
+  <div class="wrap"><p class="fine" style="padding-bottom:28px">Plain HTML on GitHub Pages, no build step.</p></div>
 </footer>
 
 <script>
@@ -420,10 +343,7 @@ const TOOLS = [
     problem: 'Every packet meant saving, sorting and printing drawings for six shop stations, then a sign-off sheet by hand.',
     steps: ['New mail wakes an Outlook handler. Nothing polls.', 'Check the sender, subject and job number', 'Sort the PDFs and print sets for six stations', 'Build the sign-off sheet and tag the email'],
     results: ['14 packets in its first four weeks', '13 print jobs to 2 printers in 6 minutes on its first live run', 'Each email is claimed once, so nothing prints twice'],
-    links: [
-      { label: 'Run it at the top of the page', href: '#top' },
-      { label: 'See how it’s built', href: 'ifc-drawing-packet-printer.html' }
-    ]
+    links: [{ label: 'See how it’s built', href: 'ifc-drawing-packet-printer.html' }]
   },
   {
     name: 'Overtime costing tool',
@@ -470,7 +390,6 @@ const TOOLS = [
 /* ------------------------------------------------------------------ helpers */
 const $ = (id) => document.getElementById(id);
 const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const wait = (ms) => new Promise((r) => setTimeout(r, REDUCED ? 0 : ms));
 function h(tag, attrs, ...kids) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {
@@ -501,7 +420,7 @@ function h(tag, attrs, ...kids) {
 /* ------------------------------------------------------------------ motion */
 (function motion() {
   if (REDUCED || !('IntersectionObserver' in window)) return;
-  const groups = ['.hero-grid > div:first-child > *', '.hero-grid > .sheet', '.section h2', '.section .intro', '.tool',
+  const groups = ['.hero-grid > div:first-child > *', '.section h2', '.section .intro', '.tool',
     '.note', '.other > *', '.tb-row', '.foot-grid > *'];
   const io = new IntersectionObserver((entries) => entries.forEach((e) => {
     if (!e.isIntersecting) return;
@@ -591,138 +510,6 @@ function h(tag, attrs, ...kids) {
     reg.append(h('article', { class: 'tool' }, head, drawer));
   });
 })();
-
-/* ------------------------------------------------------------------ IFC Drawing packet printer */
-(function packetPrinter() {
-  const STATIONS = ['Bundle shop', 'Welding shop 1', 'Welding shop 2', 'Shop foreman', 'Machine shop', 'Prep shop'];
-  const STEPS = [
-    'Outlook raises the new-mail event',
-    'Check sender, subject keyword and job number',
-    'Save attachments and sort by document type',
-    'Print letter and ledger sets',
-    'Build and print the sign-off sheet',
-    'File the run and tag the email'
-  ];
-  const DRAWINGS = ['BS.pdf', 'TS.pdf', 'CH.pdf', 'NZ.pdf', 'SF.pdf'];
-  const CASES = {
-    normal: {
-      label: 'IFC email', from: 'Document Control', subject: 'IFC: Job 31-0042, cooler bundle',
-      files: ['DRC.pdf'].concat(DRAWINGS), drc: true, print: true,
-      out: [
-        ['done', 'New message from Document Control.'],
-        ['done', 'Sender is on the allow list. One job number, 31-0042.'],
-        ['done', 'Found the drawing register and 5 drawings.'],
-        ['done', '12 print jobs, 6 stations, 2 printers.'],
-        ['done', 'Filled from the drawing register. Goes to the shop foreman.'],
-        ['done', 'Tagged printed. Manifest saved with the run.']
-      ],
-      result: ['Printed. 13 print jobs on 2 printers, nobody involved.', false]
-    },
-    reply: {
-      label: 'A reply to it', from: 'A colleague on the allow list', subject: 'RE: IFC: Job 31-0042, cooler bundle',
-      files: ['DRC.pdf'].concat(DRAWINGS), drc: true, print: false,
-      out: [
-        ['done', 'New message.'],
-        ['fail', 'Subject starts with RE:. A reply keeps the subject and the attachments, so printing it would reprint the whole package.'],
-        ['skip', ''], ['skip', ''], ['skip', ''],
-        ['done', 'Left in the inbox untouched.']
-      ],
-      result: ['Refused on purpose. Nothing printed.', false]
-    },
-    dated: {
-      label: 'Dated file names', from: 'Document Control', subject: 'IFC: Job 31-0057, exchanger shell',
-      files: ['DRC.pdf', 'BS - Sept 11-2026.pdf', 'TS.pdf', 'CH.pdf', 'NZ.pdf', 'SF.pdf'], drc: true, print: true,
-      out: [
-        ['done', 'New message from Document Control.'],
-        ['done', 'Sender is on the allow list. One job number, 31-0057.'],
-        ['done', 'Matched "BS - Sept 11-2026.pdf" as BS. A date after the code is allowed, but SFA.pdf still won’t match SF.'],
-        ['done', '12 print jobs, 6 stations, 2 printers.'],
-        ['done', 'Filled from the drawing register.'],
-        ['done', 'Tagged printed.']
-      ],
-      result: ['Printed. 13 print jobs on 2 printers.', false]
-    },
-    nodrc: {
-      label: 'No drawing register', from: 'Document Control', subject: 'IFC: Job 31-0063, channel cover',
-      files: DRAWINGS.slice(), drc: false, print: true,
-      out: [
-        ['done', 'New message from Document Control.'],
-        ['done', 'Sender is on the allow list. One job number, 31-0063.'],
-        ['done', 'No drawing register attached. The 5 drawings still print.'],
-        ['done', '6 print jobs, ledger sets only.'],
-        ['skip', 'Needs the drawing register. Skipped, not failed.'],
-        ['done', 'Tagged printed, partial. The reason is in the manifest.']
-      ],
-      result: ['Printed, partial. 6 print jobs. The missing register is flagged.', true]
-    }
-  };
-  let current = 'normal';
-  let token = 0;
-  const casesEl = $('run-cases');
-  Object.entries(CASES).forEach(([k, c]) => {
-    casesEl.append(h('button', { type: 'button', 'aria-pressed': k === current ? 'true' : 'false', 'data-k': k,
-      onclick: () => { current = k; casesEl.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.k === k ? 'true' : 'false')); reset(); } }, c.label));
-  });
-
-  const stepsEl = $('run-steps');
-  const stationsEl = $('run-stations');
-  const resultEl = $('run-result');
-  const piles = STATIONS.map((s) => {
-    const pile = h('span', { class: 'pile' });
-    stationsEl.append(h('div', { class: 'tray' }, h('div', { class: 'nm' }, s), pile));
-    return pile;
-  });
-
-  function reset() {
-    token++;
-    const c = CASES[current];
-    const mail = $('run-mail');
-    mail.replaceChildren(
-      h('div', { class: 'from' }, 'From: ' + c.from),
-      h('div', { class: 'subj' }, c.subject),
-      h('div', { class: 'files' }, c.files.map((f) => h('span', { class: 'file' }, f)))
-    );
-    stepsEl.replaceChildren(...STEPS.map((s) => h('li', {}, h('span', { class: 'ic', 'aria-hidden': 'true' }), h('span', {}, s, h('span', { class: 'step-note' })))));
-    piles.forEach((p) => p.replaceChildren());
-    resultEl.textContent = '';
-    resultEl.style.color = '';
-  }
-
-  async function run() {
-    reset();
-    const my = token;
-    const c = CASES[current];
-    const items = Array.from(stepsEl.children);
-    for (let i = 0; i < STEPS.length; i++) {
-      if (my !== token) return;
-      const li = items[i];
-      li.className = 'active';
-      await wait(520);
-      if (my !== token) return;
-      const [state, note] = c.out[i];
-      li.className = state;
-      li.querySelector('.ic').textContent = state === 'done' ? '✓' : state === 'fail' ? '✕' : '';
-      li.querySelector('.step-note').textContent = note;
-      if (i === 3 && c.print) {
-        for (let s = 0; s < STATIONS.length; s++) {
-          if (my !== token) return;
-          if (c.drc) piles[s].append(h('i', { title: 'Drawing register, letter' }));
-          for (let d = 0; d < DRAWINGS.length; d++) piles[s].append(h('i', { class: 'ledger', title: 'Drawing, ledger' }));
-          await wait(110);
-        }
-      }
-      if (i === 4 && c.print && c.drc) piles[3].prepend(h('i', { class: 'signoff', title: 'Sign-off sheet' }));
-    }
-    resultEl.textContent = c.result[0];
-    resultEl.style.color = c.result[1] ? 'var(--red)' : '';
-  }
-
-  $('run-btn').addEventListener('click', run);
-  reset();
-  // One orchestrated moment on load. Reduced motion gets the finished state at once.
-  setTimeout(run, REDUCED ? 0 : 700);
-})();
-
 </script>
 </body>
 </html>

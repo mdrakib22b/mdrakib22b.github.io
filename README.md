@@ -6,11 +6,9 @@ Live at https://mdrakib22b.github.io
 
 ## What's here
 
-One page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu in the header and the footer link to. No build step, no framework, no backend. The only outside request is Google Fonts, and the page still works without it.
+The main page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu in the header and the footer link to. No build step, no framework, no backend. The only outside request is Google Fonts, and the page still works without it.
 
-The IFC Drawing packet printer at the top of the page runs in the browser on four made-up sample emails, including the cases it refuses or prints partially.
-
-`ifc-drawing-packet-printer.html` is a standalone animated walkthrough of how the IFC Drawing packet printer is built, layer by layer with excerpts of its real code. It's linked from the IFC Drawing packet printer demo and its entry in the tools list.
+`ifc-drawing-packet-printer.html` is a standalone animated walkthrough of how the IFC Drawing packet printer is built, layer by layer with excerpts of its real code. It's linked from the IFC Drawing packet printer's entry in the tools list.
 
 ## Editing
 
@@ -27,4 +25,4 @@ To update the resume, replace `Md_Rakib_Resume.pdf` with a file of the same name
 
 ## Before every publish
 
-Every name, job number and figure in the demo is fictional. Keep it that way. Before pushing, search the file for employer, client and colleague names, real job numbers, internal paths and dollar values, and remove anything that turns up.
+Every name, job number and figure on the site is fictional. Keep it that way. Before pushing, search the file for employer, client and colleague names, real job numbers, internal paths and dollar values, and remove anything that turns up.
