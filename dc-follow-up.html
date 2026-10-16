@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DC Follow-Up, under the hood</title>
+<meta name="description" content="How DC Follow-Up is built: Task Scheduler, PowerShell, Python with openpyxl, a self-contained HTML dashboard and classic Outlook, shown layer by layer with the real code.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%231E5A8A'/%3E%3Cg fill='%23FBFCFD'%3E%3Ccircle cx='10' cy='12' r='2.2'/%3E%3Ccircle cx='16' cy='12' r='2.2'/%3E%3Ccircle cx='22' cy='12' r='2.2'/%3E%3Ccircle cx='13' cy='20' r='2.2'/%3E%3Ccircle cx='19' cy='20' r='2.2'/%3E%3C/g%3E%3C/svg%3E">
+<script>
+  // Follow the theme picked on the main page, before first paint.
+  (function () { try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-size:14px}
+[hidden]{display:none!important}
+/* Layout: a dark "engine room" stage. Left, an exploded isometric stack of the software layers with cables
+   to the logs, the shared drive, the CSVs and Outlook. Right, the real code for whichever layer is live.
+   Page chrome follows the theme; the stage keeps one dark look in both themes. */
+:root{
+  --bg:#E8EDF2; --ink:#18222E; --muted:#56667A; --red:#D8443A; --green:#23905A; --accent:#2F68B0;
+  --display:"Bricolage Grotesque","Arial Rounded MT Bold","Segoe UI",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  /* stage palette, same in both themes */
+  --k-bg:#0E1621; --k-bg2:#131E2C; --k-grid:#1E2B3B; --k-line:#2B3B50; --k-text:#E6EDF5; --k-muted:#8A9BB0;
+  --k-task:#7C93B5; --k-ps:#3B82F6; --k-py:#F2C14E; --k-html:#F28C38; --k-link:#E36FA0;
+  --k-xl:#2FA86A; --k-share:#5CC8E0; --k-csv:#A3E635; --k-ol:#8E6CEF;
+  --k-ok:#4ADE80; --k-str:#F2C98A; --k-kw:#B79BFF; --k-com:#6F8299; --k-num:#7DD3FC;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0B121B; --ink:#E6EDF5; --muted:#9AAABD; --red:#FF7366; --green:#62D394; --accent:#7FB2F0; color-scheme:dark }
+}
+:root[data-theme="dark"]{ --bg:#0B121B; --ink:#E6EDF5; --muted:#9AAABD; --red:#FF7366; --green:#62D394; --accent:#7FB2F0; color-scheme:dark }
+body{background:var(--bg);color:var(--ink);font-family:var(--body)}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:22px 34px;display:grid;gap:14px}
+h1{font:800 clamp(28px,4.2vw,42px)/1.05 var(--display);letter-spacing:-.01em;margin:0;text-wrap:balance}
+
+.stage{margin:0;position:relative;background:var(--k-bg);color:var(--k-text);border:3px solid #18222E;border-radius:14px;overflow:hidden;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+.stage svg{display:block;width:100%;height:auto}
+.diagram{min-width:0;background:radial-gradient(circle at 50% 45%, var(--k-bg2), var(--k-bg) 70%)}
+.codecol{min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--k-line);background:var(--k-bg)}
+.tabbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--k-line);background:var(--k-bg2);min-height:52px;flex-wrap:wrap}
+.tab{font:600 13px var(--mono);color:var(--k-text);background:var(--k-bg);border:1px solid var(--k-line);border-bottom:2px solid var(--lang,var(--k-muted));padding:6px 10px;border-radius:6px 6px 0 0;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.lang{font:800 11px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--k-bg);background:var(--lang,var(--k-muted));padding:4px 8px;border-radius:99px}
+.where{margin-left:auto;font:600 11.5px var(--mono);color:var(--k-muted)}
+.code{flex:1;margin:0;padding:16px 16px 18px;font:400 13px/1.62 var(--mono);color:var(--k-text);white-space:pre-wrap;tab-size:4;font-variant-ligatures:none;min-height:var(--code-h,360px)}
+.code .row{display:block;padding-left:3.3em;text-indent:-3.3em;overflow-wrap:anywhere}
+.code .ln{display:inline-block;width:2.2em;color:#3C4F66;text-align:right;margin-right:1.1em;user-select:none}
+.code .k{color:var(--k-kw)} .code .s{color:var(--k-str)} .code .c{color:var(--k-com);font-style:italic} .code .n{color:var(--k-num)} .code .ok{color:var(--k-ok);font-weight:600}
+.caret{display:inline-block;width:.6em;height:1.1em;vertical-align:-.18em;background:var(--lang,var(--k-text));animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.about{border-top:1px solid var(--k-line);padding:12px 16px 14px;font:400 14px/1.5 var(--body);color:var(--k-muted);min-height:66px}
+.about b{color:var(--k-text);font-weight:700}
+
+.ov{position:absolute;inset:0;display:grid;place-items:center;background:rgba(14,22,33,.97);padding:24px;opacity:0;visibility:hidden}
+.ov-title{text-align:center}
+.ov-title .part{font:800 14px var(--display);letter-spacing:.2em;color:var(--k-py);text-transform:uppercase}
+.ov-title h2{font:800 clamp(44px,8vw,104px)/0.95 var(--display);margin:.15em 0 .2em;letter-spacing:-.02em}
+.ov-title p{font:400 clamp(15px,2vw,21px)/1.4 var(--body);color:var(--k-muted);margin:0}
+.bom{width:min(900px,100%);max-height:100%;overflow:auto}
+#ovBom{padding-bottom:84px}
+.bom h2{font:800 clamp(22px,3vw,34px) var(--display);margin:0 0 4px}
+.bom .sub{font:400 15px var(--body);color:var(--k-muted);margin:0 0 14px}
+.bom table{width:100%;border-collapse:collapse;font:400 14px var(--body)}
+.bom th{font:800 11px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--k-muted);text-align:left;padding:6px 8px;border-bottom:2px solid var(--k-line)}
+.bom td{padding:7px 8px;border-bottom:1px solid var(--k-line);vertical-align:top}
+.bom td:first-child{font:600 13px var(--mono);color:var(--k-muted);width:2.5em}
+.bom td.part{font:600 13.5px var(--mono);white-space:nowrap}
+.bom .sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:0}
+.bom .foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.bom .chip{font:800 13px var(--display);letter-spacing:.04em;border:1.5px solid var(--k-line);border-radius:99px;padding:6px 12px}
+.bom tr{opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
+.bom tr.in{opacity:1;transform:none}
+
+.bigplay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;padding:14px 26px 14px 20px;border-radius:999px;background:var(--k-py);color:#18222E;border:3px solid #18222E;font:800 clamp(14px,2vw,21px) var(--display);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;box-shadow:0 5px 0 #18222E;z-index:3}
+.bigplay svg{width:1.3em;height:1.3em;fill:currentColor}
+.bigplay.start{top:78%}
+.bigplay.end{top:auto;bottom:18px;transform:translateX(-50%)}
+.bigplay:focus-visible{outline:3px solid var(--k-share);outline-offset:3px}
+.pill{position:absolute;top:12px;left:12px;font:800 13px var(--display);letter-spacing:.06em;text-transform:uppercase;background:var(--k-text);color:var(--k-bg);padding:6px 14px;border-radius:999px;pointer-events:none;z-index:3}
+.caption{display:grid;gap:4px;min-height:100px;align-content:start}
+.cap-act{font:800 12.5px var(--display);letter-spacing:.12em;margin:0;text-transform:uppercase;color:var(--accent)}
+.caption h2{font:800 clamp(21px,2.6vw,27px)/1.15 var(--display);margin:0;text-wrap:balance}
+#capP{margin:0;font-size:16px;line-height:1.55;max-width:70ch}
+@media (max-width:860px){
+  .stage{grid-template-columns:1fr}
+  .codecol{border-left:0;border-top:1px solid var(--k-line)}
+  .code{font-size:11px;padding:12px}
+  #slabs .lbl-f{display:none}
+  #slabs .lbl-t{font-size:21px}
+  #trigChip text{font-size:14px}
+  .bom th:nth-child(3),.bom td:nth-child(3){display:none}
+  .about{font-size:13px}
+  .bigplay{padding:8px 16px 8px 12px;font-size:13px;border-width:2px;box-shadow:0 3px 0 #18222E}
+  .bigplay.start{top:76%}
+  .pill{top:8px;left:8px;font-size:11px;padding:4px 10px}
+  .pill .more{display:none}
+  .caption{min-height:140px}
+  .bom table{font-size:12.5px}
+  .bom td.part{font-size:12px;white-space:normal}
+  #ovBom{padding:16px 16px 76px}
+}
+@media (prefers-reduced-motion: reduce){.caret{animation:none}.bom tr{transition:none}}
+
+/* ---- diagram ---- */
+.dot{fill:var(--k-grid)}
+.lbl-t{font:800 17px var(--display);fill:var(--k-text)}
+.lbl-f{font:600 12px var(--mono);fill:var(--k-muted)}
+.leader{stroke:var(--k-line);stroke-width:1.5}
+.cable{fill:none;stroke-width:3.5;stroke-linecap:round;opacity:.35}
+.cable.on{opacity:1}
+.pulse{stroke:none}
+.ext rect.box{fill:var(--k-bg2);stroke:var(--k-line);stroke-width:2}
+.ext.on rect.box{stroke-width:3}
+.ext-t{font:800 15px var(--display);fill:var(--k-text)}
+.ext-f{font:600 11px var(--mono);fill:var(--k-muted)}
+.iso{font:800 30px var(--display)}
+.chip-t{font:700 10px var(--mono)}
+.tagpill{font:800 11px var(--display);letter-spacing:.08em}
+.chk{fill:none;stroke:var(--k-ok);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.back{font:600 14px var(--body);color:var(--accent);text-decoration:none;justify-self:start}
+.back:hover{text-decoration:underline;text-underline-offset:3px}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <a class="back" href="./#tools">&larr; Back to all tools</a>
+  <h1>DC Follow-Up, under the hood</h1>
+
+  <figure class="stage" id="stage">
+    <div class="diagram">
+      <svg id="dia" viewBox="0 0 720 760" role="img" aria-labelledby="diaT">
+        <title id="diaT">Exploded view of the software stack: Task Scheduler, PowerShell, Python, the HTML dashboard and a link handler, with cables to the Document Control Logs, the shared drive, the CSV files and Outlook.</title>
+        <g id="dots"></g>
+        <!-- the trigger -->
+        <g id="trigChip">
+          <rect x="290" y="16" width="140" height="34" rx="17" fill="#131E2C" stroke="#2B3B50" stroke-width="2"/>
+          <circle cx="311" cy="33" r="9" fill="none" stroke="#E6EDF5" stroke-width="2"/>
+          <path d="M311 27v6l4 3" fill="none" stroke="#E6EDF5" stroke-width="2" stroke-linecap="round"/>
+          <text x="328" y="39" class="lbl-f" style="fill:#E6EDF5">Every hour</text>
+        </g>
+        <line x1="360" y1="50" x2="360" y2="58" stroke="#2B3B50" stroke-width="2" stroke-dasharray="3 4"/>
+        <g id="doneTag" style="opacity:0">
+          <rect x="440" y="17" width="150" height="32" rx="16" fill="#123323" stroke="#4ADE80" stroke-width="2"/>
+          <text x="515" y="38" class="tagpill" text-anchor="middle" style="fill:#4ADE80">✓ DRAFT OPEN</text>
+        </g>
+
+        <!-- cables -->
+        <path id="cLogs" d="M510 346C542 346 536 221 566 221" class="cable" style="stroke:var(--k-xl)"/>
+        <path id="cShare" d="M510 346C540 346 540 361 566 361" class="cable" style="stroke:var(--k-share)"/>
+        <path id="cCsv" d="M510 346C542 346 536 501 566 501" class="cable" style="stroke:var(--k-csv)"/>
+        <path id="cOut" d="M360 665C360 680 360 686 360 700" class="cable" style="stroke:var(--k-ol)"/>
+
+        <!-- external systems -->
+        <g id="xLogs" class="ext">
+          <rect class="box" x="566" y="190" width="146" height="62" rx="10"/>
+          <rect x="580" y="204" width="30" height="34" rx="3" fill="none" stroke="#2FA86A" stroke-width="2"/>
+          <path d="M580 215h30M580 226h30M592 204v34" stroke="#2FA86A" stroke-width="1.5"/>
+          <text x="620" y="217" class="ext-t">DC Logs</text>
+          <text x="620" y="235" class="ext-f">2 × .xlsx</text>
+        </g>
+        <g id="xShare" class="ext">
+          <rect class="box" x="566" y="330" width="146" height="62" rx="10"/>
+          <path d="M580 348h12l4 4h20v20h-36z" fill="none" stroke="#5CC8E0" stroke-width="2"/>
+          <text x="624" y="356" class="ext-t">Shared</text><text x="624" y="374" class="ext-t">drive</text>
+          <text x="580" y="388" class="ext-f">SMB</text>
+        </g>
+        <g id="xCsv" class="ext">
+          <rect class="box" x="566" y="470" width="146" height="62" rx="10"/>
+          <path d="M580 484h18l8 8v26h-26z" fill="none" stroke="#A3E635" stroke-width="2"/>
+          <path d="M585 499h16M585 506h16M585 513h10" stroke="#A3E635" stroke-width="1.5"/>
+          <text x="616" y="497" class="ext-t">CSV files</text>
+          <text x="616" y="515" class="ext-f">5 per run</text>
+        </g>
+        <g id="xOut" class="ext">
+          <rect class="box" x="290" y="700" width="140" height="48" rx="8"/>
+          <rect x="304" y="713" width="24" height="17" rx="2" fill="none" stroke="#8E6CEF" stroke-width="2"/>
+          <path d="M304 714l12 8 12-8" fill="none" stroke="#8E6CEF" stroke-width="2"/>
+          <text x="338" y="722" class="ext-t">Outlook</text>
+          <text x="338" y="739" class="ext-f">classic · COM</text>
+        </g>
+        <g id="sheets"></g>
+
+        <!-- the stack -->
+        <g id="slabs"></g>
+        <g id="pulses"></g>
+        <g id="roTag"><rect x="502" y="266" width="86" height="22" rx="11" fill="#0E1621" stroke="#2FA86A" stroke-width="1.5"/><text x="545" y="281" class="tagpill" text-anchor="middle" style="fill:#4ADE80">READ-ONLY</text></g>
+        <g id="packet" style="opacity:0">
+          <circle r="16" fill="#E6EDF5" opacity=".18"/>
+          <circle r="9" fill="#E6EDF5" stroke="#18222E" stroke-width="3"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="codecol">
+      <div class="tabbar"><span class="tab" id="tab">DC FollowUp\</span><span class="lang" id="lang">folder</span><span class="where" id="where"></span></div>
+      <pre class="code" id="code" aria-live="off"></pre>
+      <div class="about" id="about"></div>
+    </div>
+
+    <div class="ov ov-title" id="ovTitle">
+      <div>
+        <div class="part">How it's built</div>
+        <h2>Under the hood</h2>
+        <p>The stack behind DC Follow-Up.<br>Every line of code you'll see is from the real tool.</p>
+      </div>
+    </div>
+
+    <div class="ov" id="ovBom">
+      <div class="bom">
+        <h2>Bill of materials</h2>
+        <p class="sub">Everything the system is made of, from the Excel log to the Outlook draft.</p>
+        <table>
+          <thead><tr><th>Item</th><th>Part</th><th>Type</th><th>Job</th></tr></thead>
+          <tbody id="bomRows"></tbody>
+        </table>
+        <div class="foot" id="bomFoot"></div>
+      </div>
+    </div>
+
+    <button id="bigPlay" class="bigplay start" type="button" aria-label="Play with sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span>Play</span></button>
+    <div id="pausedPill" class="pill" hidden>Paused<span class="more"> · tap to resume</span></div>
+  </figure>
+
+  <section class="caption" aria-live="polite">
+    <p class="cap-act" id="capAct">Under the hood</p>
+    <h2 id="capH">What actually runs</h2>
+    <p id="capP">What runs every hour on a weekday, from a saved Excel log to a follow-up email. Every snippet here is real code from the tool.</p>
+  </section>
+</main>
+
+<!-- The code, one block per step: real code from the tool, trimmed for length. -->
+<script type="text/plain" id="c-tree">
+DC FollowUp\
+├─ README.md
+├─ setup\                        # shared by every version
+│  ├─ Install-FolderLinks.ps1
+│  ├─ Open-Folder.ps1
+│  ├─ Open-Link.ps1
+│  ├─ Promote-ToProduction.ps1
+│  └─ Run-Production.ps1
+├─ Production\                   # the live version
+│  ├─ Run-DCFollowUp.ps1
+│  ├─ config.json
+│  ├─ version.json
+│  ├─ DC FollowUp Dashboard.html
+│  ├─ src\                       # 7 files, 3,434 lines of Python
+│  └─ out\                       # CSVs, snapshots, run_log.txt
+└─ v1\ … v7\                     # one folder per version
+</script>
+<script type="text/plain" id="c-task">
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek $days -At $From `
+           -RepetitionInterval $span -RepetitionDuration $window
+$argLine += ' -IfChanged'
+
+$action    = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $argLine `
+             -WorkingDirectory $root
+$settings  = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew `
+             -StartWhenAvailable -DontStopIfGoingOnBatteries `
+             -AllowStartIfOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 1)
+$principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive
+
+Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger `
+    -Settings $settings -Principal $principal -Force `
+    -Description 'Rebuilds the DC Follow-Up V7 document-cycle dashboard from the Document Control Logs (read-only).' | Out-Null
+</script>
+<script type="text/plain" id="c-run">
+$ver = Get-Content (Join-Path $root 'version.json') -Raw | ConvertFrom-Json
+
+# Find a usable python
+$py = (Get-Command python -ErrorAction SilentlyContinue).Source
+if (-not $py) { $py = (Get-Command py -ErrorAction SilentlyContinue).Source }
+
+# openpyxl is the only hard dependency
+& $py -c "import openpyxl" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    & $py -m pip install --quiet --user openpyxl
+}
+
+$argsList = @($ver.entry)
+if ($IfChanged)          { $argsList += '--if-changed' }
+& $py @argsList
+if ($LASTEXITCODE -ne 0) { throw "$($ver.entry) failed with exit code $LASTEXITCODE" }
+</script>
+<script type="text/plain" id="c-sig">
+def source_signature(cfg):
+    sig = {}
+    for src in cfg["sources"]:
+        try:
+            st = os.stat(src["path"])
+            sig[src["label"]] = [int(st.st_mtime), st.st_size]
+        except OSError:
+            sig[src["label"]] = None
+    return sig
+
+if (prev.get("sig") == sig
+        and prev.get("as_of") == str(today)
+        and os.path.exists(html_path)
+        and published_copies_present(cfg, html_name)):
+    return 0
+
+shutil.copy2(path, dest)
+</script>
+<script type="text/plain" id="c-parse">
+wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+for ws in wb.worksheets:
+    title = ws.title.strip()
+    if SKIP_SHEET.match(title) or not JOB_SHEET.match(title):
+        continue
+
+grid = [list(r) for r in ws.iter_rows(values_only=True)]
+
+elif hv == "CLIENT" and sv == "SENT" and b.sent_col is None:
+    b.sent_col = col
+    if s(col + 1) == "RTN":
+        b.rtn_col = col + 1
+elif hv and sv == "SENT" and hv != "CLIENT":
+    # An internal department: a name over a bare SENT, no RTN.
+    b.internal.setdefault(hv, col)
+</script>
+<script type="text/plain" id="c-folders">
+# "Transmittal 7", "Trasnmittal 7", "Transmittal 0007", "T7", "T 7".
+# Deliberately not "T-12345": those are client transmittal numbers.
+TRN_NUM_RE = re.compile(r"^(?:tra(?:ns|sn)mitt?al|t)\s*0*(\d+)\b", re.I)
+
+self.sent = self._list("Documents Sent")
+self.recv = self._list("Documents Received")
+
+names = sorted(os.listdir(base))
+
+hit = [f for f in pool if f.date == when]
+if hit:
+    return narrow(hit), "date"
+near = [(abs((f.date - when).days), f) for f in pool
+        if f.date and abs((f.date - when).days) <= NEAR_DAYS]
+</script>
+<script type="text/plain" id="c-life">
+elif latest["rtn"] is None:
+    if ends_cycle and code_class in ("approved", "info"):
+        stage = "missing_rtn"
+    else:
+        stage = "at_client"
+    driver = latest["sent"]
+
+else:
+    # The latest issue has come back, so the code now describes it.
+    if code_class == "blank":
+        stage = "needs_code"
+    elif ends_cycle:
+        stage = "complete"
+    elif after:
+        stage = "revising"
+    else:
+        stage = "awaiting_revision"
+</script>
+<script type="text/plain" id="c-email">
+def _greeting(g, e):
+    to = g.get("to") or []
+    if len(to) > 1:
+        return e.get("greeting_many", e["greeting"])
+    if len(to) == 1:
+        m = re.match(r'\s*"([^"]+)"', to[0])
+        if m and e.get("greeting_one"):
+            return e["greeting_one"].format(first=m.group(1).split()[0])
+    return e["greeting"]
+
+# No day count here: the send date says it, and the number reads as
+# pressure applied to someone who may already have it in hand.
+opening = (f"Following up on the document{plural} below, sent to you on "
+           f"{sent_str}. {e['not_received']}")
+</script>
+<script type="text/plain" id="c-render">
+def render(path, docs, client_groups, internal_groups, sources, unknown,
+           warnings, cfg, today):
+    data = _payload(docs, client_groups, internal_groups, sources, unknown,
+                    warnings, cfg, today)
+    blob = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(TEMPLATE.replace("__DATA__", blob))
+
+write_csv(os.path.join(outdir, "lifecycle.csv"), DOC_COLS,
+          (doc_record(d) for d in docs))
+
+tmp = dest + ".new"
+shutil.copy2(html_path, tmp)
+os.replace(tmp, dest)
+</script>
+<script type="text/plain" id="c-js">
+const D = JSON.parse(document.getElementById('data').textContent);
+
+/* The threshold is the only thing that decides "overdue", and it is live. */
+const overdue = (g, s) =>
+  g.days !== null && g.days >= (g.stream === 'client' ? s.cdays : s.idays);
+
+const cs = new Blob([new TextEncoder().encode(g.html)]).stream()
+  .pipeThrough(new CompressionStream('deflate-raw'));
+const bytes = new Uint8Array(await new Response(cs).arrayBuffer());
+body = btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+const q = [['to', g.to.join('; ')], ['cc', g.cc.join('; ')],
+           ['subject', g.subject], ['body', body]]
+  .filter(([, v]) => v)
+  .map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
+</script>
+<script type="text/plain" id="c-link">
+# body: base64url -> raw deflate -> UTF-8 HTML
+$b64 = $q['body'].Replace('-', '+').Replace('_', '/')
+$in  = New-Object IO.MemoryStream(, [Convert]::FromBase64String($b64))
+$z   = New-Object IO.Compression.DeflateStream($in, [IO.Compression.CompressionMode]::Decompress)
+$html = [Text.Encoding]::UTF8.GetString($out.ToArray())
+
+$ol = New-Object -ComObject Outlook.Application
+$mail = $ol.CreateItem(0)
+# Display first: that is when Outlook adds the user's default signature.
+$mail.Display()
+if ($q['to'])      { $mail.To = $q['to'] }
+if ($q['subject']) { $mail.Subject = $q['subject'] }
+
+# Our text first, then the blank line and signature Outlook put there.
+$mail.HTMLBody = $current.Insert($m.Index + $m.Length, $html)
+</script>
+<script type="text/plain" id="c-promote">
+# 1. Code: an exact mirror, so nothing from the previous version lingers.
+robocopy (Join-Path $from 'src') (Join-Path $prod 'src') /MIR /XD __pycache__ /NFL /NDL /NJH /NJS /NP | Out-Null
+
+cfg["output_dir"] = "out"
+cfg["dashboard_filename"] = "DC FollowUp Dashboard.html"
+cfg["publish_to"] = [prod]
+
+# 3. The standard runner and the record of what is live.
+Copy-Item (Join-Path $setup 'Run-Production.ps1') (Join-Path $prod 'Run-DCFollowUp.ps1') -Force
+
+# 4. Build. The published dashboard only changes if this succeeds.
+& (Join-Path $prod 'Run-DCFollowUp.ps1') -Quiet
+</script>
+<script type="text/plain" id="c-bom">
+# openpyxl is the only hard dependency
+& $py -c "import openpyxl" 2>$null
+</script>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const seg = (t, a, b) => clamp((t - a) / (b - a));
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const eio = p => p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+  const eout = p => 1 - Math.pow(1 - p, 3);
+  const op = (el, o) => { el.style.opacity = o; el.style.visibility = o <= 0.001 ? 'hidden' : 'visible'; };
+  const tf = (el, s) => el.setAttribute('transform', s);
+  const add = (id, html) => $(id).insertAdjacentHTML('beforeend', html);
+  const src = id => $(id).textContent.replace(/^\r?\n/, '').replace(/\s+$/, '');
+
+  /* ---------- the layers ---------- */
+  const COL = { task: '#7C93B5', ps: '#3B82F6', py: '#F2C14E', html: '#F28C38', link: '#E36FA0',
+                xl: '#2FA86A', share: '#5CC8E0', csv: '#A3E635', ol: '#8E6CEF' };
+  const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16); const c = s => Math.round(((n >> s) & 255) * k); return `rgb(${c(16)},${c(8)},${c(0)})`; };
+  const CX = 360, A = 150, B = 75, H = 24, PY = 2;
+  const LAYERS = [
+    { y: 126, col: COL.task, iso: 'TASK', title: 'Task Scheduler', file: 'hourly, weekdays' },
+    { y: 236, col: COL.ps,   iso: '.ps1', title: 'PowerShell', file: 'Run-DCFollowUp.ps1' },
+    { y: 346, col: COL.py,   iso: '.py',  title: 'Python 3', file: 'build_report7.py' },
+    { y: 456, col: COL.html, iso: 'HTML', title: 'Dashboard', file: 'one .html file' },
+    { y: 566, col: COL.link, iso: 'LINK', title: 'Link handler', file: 'Open-Link.ps1' }
+  ];
+  // Python's modules sit on its slab as chips, in the part the slab above leaves visible: [name, x, y].
+  const CHIPS = [['dc_parse', 272, 341], ['folders', 316, 363], ['lifecycle', 404, 363], ['emails', 448, 341]];
+  const ISO = 'matrix(0.894 0.447 -0.894 0.447 0 0)';
+  for (let x = 20; x < 720; x += 40) for (let y = 70; y < 700; y += 40) add('dots', `<circle cx="${x}" cy="${y}" r="1.6" class="dot"/>`);
+  LAYERS.forEach((L, i) => {
+    const y = L.y;
+    const chips = i === PY ? CHIPS.map(([n, x, cy]) =>
+      `<g id="chip-${n}"><path d="M${x - 42} ${cy}L${x} ${cy - 21}L${x + 42} ${cy}L${x} ${cy + 21}Z" fill="${shade(L.col, 0.55)}" stroke="#18222E" stroke-width="2"/>
+       <text class="chip-t" text-anchor="middle" x="${x}" y="${cy + 3.5}" fill="#FFF7E0">${n}</text></g>`).join('') : '';
+    $('slabs').insertAdjacentHTML('afterbegin', `<g id="slab${i}">
+      <path d="M${CX - A} ${y}L${CX} ${y + B}L${CX} ${y + B + H}L${CX - A} ${y + H}Z" fill="${shade(L.col, 0.62)}"/>
+      <path d="M${CX} ${y + B}L${CX + A} ${y}L${CX + A} ${y + H}L${CX} ${y + B + H}Z" fill="${shade(L.col, 0.45)}"/>
+      <path id="top${i}" d="M${CX - A} ${y}L${CX} ${y - B}L${CX + A} ${y}L${CX} ${y + B}Z" fill="${L.col}" stroke="#18222E" stroke-width="2"/>
+      ${i === PY ? '' : `<text class="iso" text-anchor="middle" transform="translate(${CX} ${y}) ${ISO}" x="0" y="10" fill="${shade(L.col, 0.35)}">${L.iso}</text>`}
+      ${chips}
+      <line x1="200" y1="${y}" x2="${CX - A - 4}" y2="${y}" class="leader"/>
+      <text x="196" y="${y - 4}" class="lbl-t" text-anchor="end">${L.title}</text>
+      <text x="196" y="${y + 14}" class="lbl-f" text-anchor="end">${L.file}</text>
+      <path id="ck${i}" d="M${CX + A + 8} ${y - 22}l6 6 12 -14" class="chk" style="opacity:0"/>
+    </g>`);
+  });
+  add('slabs', `<path id="ckShare" d="M690 340l6 6 12 -14" class="chk" style="opacity:0"/>`);
+  // Drafts floating up beside Outlook.
+  for (let k = 0; k < 4; k++) add('sheets', `<g id="sh${k}" style="opacity:0"><rect x="-10" y="-7" width="20" height="14" rx="2" fill="#F7F9FB" stroke="#18222E" stroke-width="1.5"/><path d="M-10 -6l10 7 10 -7" fill="none" stroke="#8E6CEF" stroke-width="1.5"/></g>`);
+  for (let k = 0; k < 4; k++) add('pulses', `<circle id="pu${k}" r="6" class="pulse" style="opacity:0"/>`);
+
+  /* ---------- real code, step by step ---------- */
+  const STEPS = [
+    { t: 0, title: 'What actually runs', desc: 'What runs every hour on a weekday, from a saved Excel log to a follow-up email. Every snippet here is real code from the tool.', tab: 'DC FollowUp\\', lang: 'folder', lc: '#8A9BB0', where: '', code: '' },
+    { t: 3.5, title: 'One folder, every version', desc: 'The whole tool is one folder on the shared drive: the live version in Production, one folder per version beside it, and a setup folder they all share. Seven Python files do the real work.', tab: 'DC FollowUp\\', lang: 'folder', lc: '#8A9BB0', where: 'shared drive', hl: 'sh', src: 'c-tree', about: '<b>Repo:</b> Git, on GitHub. <b>Install:</b> one copy on the shared drive. The dashboard everyone opens has one address that never changes.' },
+    { t: 8.5, layer: 0, title: 'On a timer, not a person', desc: 'Windows Task Scheduler starts the runner every hour on weekdays, under the user\'s own account, so there is no admin right and no service account involved. A run never overlaps the one before it.', tab: 'Install-ScheduleV7.ps1', lang: 'Task Scheduler', lc: COL.task, where: 'no admin rights', hl: 'ps', src: 'c-task', about: '<b>Runs in:</b> Windows Task Scheduler, built into Windows. <b>Default:</b> every 60 minutes from 06:30 to 16:30, each run with -IfChanged.' },
+    { t: 13.5, layer: 1, title: 'The runner', desc: 'PowerShell reads version.json to learn which build script is live, finds Python, installs openpyxl if it is missing, and hands over. The runner itself never changes when a new version goes live.', tab: 'Run-DCFollowUp.ps1', lang: 'PowerShell', lc: COL.ps, where: 'powershell.exe', hl: 'ps', src: 'c-run', about: '<b>Runs in:</b> Windows PowerShell, built into Windows. <b>Fails loudly:</b> a non-zero exit from Python stops the run.' },
+    { t: 18.5, layer: 2, port: 'logs', title: 'Nothing saved? Nothing runs', desc: 'Python first stats the two Document Control Logs. Same save time, same size and same date as the last run, and it exits in about half a second. Otherwise it copies each log to a local snapshot, so the original is never opened or locked.', tab: 'build_report7.py', lang: 'Python 3', lc: COL.xl, where: 'os.stat · shutil', hl: 'py', src: 'c-sig', about: '<b>Library:</b> os and shutil, standard library. <b>A real rebuild:</b> copies about 14 MB off the file server and takes about 30 seconds.' },
+    { t: 23.5, layer: 2, chip: 'dc_parse', port: 'logs', title: 'Reading the logs', desc: 'openpyxl opens each snapshot read-only. Every job is its own sheet. Columns are found by their header text, never by letter, because the two years\' logs are laid out differently. Each block of SENT and RTN columns is one issue of a document.', tab: 'dc_parse7.py', lang: 'Python · openpyxl', lc: COL.xl, where: '361 lines', hl: 'py', src: 'c-parse', about: '<b>Package:</b> openpyxl, the only one the main run needs. <b>Departments:</b> any header over a bare SENT column is read as an internal department.' },
+    { t: 28.5, layer: 2, chip: 'folders', port: 'share', title: 'Finding every transmittal\'s folder', desc: 'Each job folder holds a Documents Sent and a Documents Received folder, one sub-folder per transmittal, named three different ways over the years. Python lists them and matches each one by transmittal number, by TRN string, or by the date at the front of the name, give or take two days.', tab: 'folders.py', lang: 'Python · SMB', lc: COL.share, where: '285 lines', hl: 'py', src: 'c-folders', about: '<b>Library:</b> os and re. <b>Opens:</b> no files at all. It reads folder names, once per run.' },
+    { t: 33.5, layer: 2, chip: 'lifecycle', title: 'Whose move is it?', desc: 'lifecycle.py puts every document in one stage. Only the newest issue counts, and the client\'s code is only read once that issue has come back. Code 1 or 4 ends the cycle. Anything else means engineering owes a revision. Ages are counted in business days.', tab: 'lifecycle.py', lang: 'Python 3', lc: COL.py, where: '639 lines', hl: 'py', src: 'c-life', about: '<b>Rules live in:</b> config.json, with code classes, departments and aging bands. <b>Longest code wins,</b> so NOT APPROVED never reads as APPROVED.' },
+    { t: 38.5, layer: 2, chip: 'emails', title: 'Writing the follow-ups', desc: 'Documents are grouped one card per email. A client card is one transmittal. An internal card is one job in one state. Every card gets its email ahead of time, in plain text and HTML, addressed from the sheet and the rosters in config.json.', tab: 'emails.py', lang: 'Python 3', lc: COL.py, where: '230 lines', hl: 'py', src: 'c-email', about: '<b>Client email:</b> asks for the return, with no day count. <b>Internal email:</b> To the engineer, Cc the P.M. and Document Control.' },
+    { t: 43.5, layer: 2, port: 'publish', title: 'One file, every document in it', desc: 'The whole result, every document and every pre-written email, goes into one self-contained HTML file as JSON. No server, no CDN. Five CSVs are written beside it. The page is copied to the shared drive under a temporary name and swapped in, so nobody opens a half-written page.', tab: 'render_dashboard7.py', lang: 'Python 3', lc: COL.csv, where: 'json · shutil', hl: 'py', src: 'c-render', about: '<b>Page size:</b> about 4 MB. <b>CSVs:</b> lifecycle, client follow-ups, internal follow-ups, by P.M., and data quality.' },
+    { t: 48.5, layer: 3, title: 'Thresholds you can move', desc: 'The page reads its own JSON and does everything in the browser. Change the overdue threshold and every chart, card and count refilters at once, with no rebuild. Follow-up in Outlook compresses the card\'s email and hands it to Windows as a link.', tab: 'DC FollowUp Dashboard.html', lang: 'JavaScript', lc: COL.html, where: 'in the browser', hl: 'js', src: 'c-js', about: '<b>Runs in:</b> any modern browser, offline. <b>Libraries:</b> none. Plain JavaScript and the built-in CompressionStream.' },
+    { t: 53.5, layer: 4, port: 'outlook', done: true, title: 'A draft, never a send', desc: 'A small PowerShell handler, registered once per PC, catches the link, unpacks the email and asks desktop Outlook for a new message over COM. It shows the draft first, so Outlook adds the user\'s own signature, then puts the follow-up above it. Nothing is ever sent.', tab: 'Open-Link.ps1', lang: 'PowerShell · COM', lc: COL.link, where: 'Outlook classic', hl: 'ps', src: 'c-link', about: '<b>Registered by:</b> Install-FolderLinks.ps1, per user, no admin. <b>Needs:</b> classic Outlook. The new Outlook has no automation interface.' },
+    { t: 58.5, deploy: true, title: 'One address that never changes', desc: 'Each version is built in its own folder. Once approved, one script mirrors its code into Production, fixes the output settings and rebuilds. The live page is only replaced when the build succeeds, so a failed promotion leaves the old one up.', tab: 'Promote-ToProduction.ps1', lang: 'PowerShell', lc: COL.ps, where: 'once per version', hl: 'ps', src: 'c-promote', about: '<b>Roll back:</b> promote the previous version again. <b>Everyone else:</b> nothing to do. Links and bookmarks keep working.' },
+    { t: 64.5, bom: true, title: 'Bill of materials', desc: 'Built on Windows, Excel logs and the Outlook every desk already has, plus Python and one open-source package. No server and no subscription.', tab: 'Run-DCFollowUp.ps1', lang: 'pip', lc: COL.py, where: '', hl: 'ps', src: 'c-bom', about: '' }
+  ];
+  STEPS.forEach(s => { s.code = s.src ? src(s.src) : ''; });
+  const IDX = k => STEPS.findIndex(s => s[k]);
+  const T_DONE = STEPS[IDX('done')].t, T_DEP = STEPS[IDX('deploy')].t, T_BOM = STEPS[IDX('bom')].t;
+  const T_RUN = STEPS.find(s => s.layer !== undefined).t;
+
+  const BOM = [
+    ['1', 'Task Scheduler', 'Built into Windows', 'Starts a run every hour', COL.task],
+    ['2', 'Run-DCFollowUp.ps1', 'PowerShell', 'Runner, finds Python', COL.ps],
+    ['3', 'src\\*.py', 'Python 3 · 3,434 lines', 'The app, in 7 files', COL.py],
+    ['4', 'openpyxl', 'pip package', 'Reads the .xlsx logs', COL.py],
+    ['5', 'Document Control Logs', 'Excel workbooks', 'The source, never written to', COL.xl],
+    ['6', 'config.json', 'JSON', 'Codes, thresholds, rosters, folders', '#8A9BB0'],
+    ['7', 'DC FollowUp Dashboard.html', 'HTML + JavaScript', 'The dashboard, no server', COL.html],
+    ['8', '5 CSV files', 'CSV', 'For Power BI or a pivot', COL.csv],
+    ['9', 'Open-Link.ps1 + Open-Folder.ps1', 'PowerShell', 'Outlook drafts, Explorer folders', COL.link],
+    ['10', 'Outlook Classic', 'COM automation', 'Builds the draft, with signature', COL.ol],
+    ['11', 'pywin32', 'pip package, optional', 'Batch drafts with -Drafts', COL.py],
+    ['12', 'Promote-ToProduction.ps1 + Git', 'PowerShell', 'One live version', COL.ps]
+  ];
+  $('bomRows').innerHTML = BOM.map(([n, p, ty, job, c], i) => `<tr id="br${i}"><td>${n}</td><td class="part"><span class="sw" style="background:${c}"></span>${p}</td><td>${ty}</td><td>${job}</td></tr>`).join('');
+  $('bomFoot').innerHTML = ['0 servers', '0 subscriptions', '1 required pip package', '0 writes to the logs'].map(s => `<span class="chip">${s}</span>`).join('');
+
+  /* ---------- syntax colouring ---------- */
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const KW = {
+    ps: 'param|if|else|exit|foreach|in|try|catch|throw|switch',
+    py: 'def|return|import|from|for|in|with|as|if|elif|else|not|and|or|is|True|False|None|try|except|raise',
+    js: 'const|let|var|function|async|await|return|new|if|else|for|null',
+  };
+  function words(s, lang) {
+    let out = s;
+    if (KW[lang]) out = out.replace(new RegExp('\\b(' + KW[lang] + ')\\b', 'g'), '<span class="k">$1</span>');
+    return out.replace(/\b(\d[\d,]*)\b/g, '<span class="n">$1</span>');
+  }
+  function colour(line, lang) {
+    // JavaScript: only whole-line comments, so a regex such as /\//g is never read as one.
+    if (lang === 'js' && /^\s*(\/\*|\/\/)/.test(line)) return `<span class="c">${esc(line)}</span>`;
+    const sq = lang === 'py' || lang === 'ps' || lang === 'js';
+    let code = line, com = '', q = '';
+    if (lang !== 'js') for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (q) { if (c === q) q = ''; }
+      else if (c === '"' || (c === "'" && sq)) q = c;
+      else if (c === '#') { code = line.slice(0, i); com = line.slice(i); break; }
+    }
+    let out = '', last = 0, m;
+    const re = sq ? /r?'[^']*'?|"(?:[^"\\]|\\.)*"?/g : /"(?:[^"\\]|\\.)*"?/g;
+    while ((m = re.exec(code))) {
+      out += words(esc(code.slice(last, m.index)), lang) + `<span class="s">${esc(m[0])}</span>`;
+      last = m.index + m[0].length;
+      if (!m[0].length) re.lastIndex++;
+    }
+    out += words(esc(code.slice(last)), lang);
+    if (com) out += `<span class="c">${esc(com)}</span>`;
+    return out;
+  }
+
+  let shownKey = '';
+  function renderCode(t, idx) {
+    const s = STEPS[idx];
+    const lines = s.code ? s.code.split('\n') : [];
+    const total = lines.reduce((n, l) => n + l.length + 1, 0);
+    const typeDur = Math.min(3.2, 0.6 + total * 0.006);
+    const start = s.t + 0.25;
+    const shown = s.bom ? total : Math.floor(total * seg(t, start, start + typeDur));
+    const key = idx + ':' + shown;
+    if (key === shownKey) return;
+    shownKey = key;
+    $('stage').style.setProperty('--lang', s.lc);
+    $('tab').textContent = s.tab; $('lang').textContent = s.lang; $('where').textContent = s.where || '';
+    $('about').innerHTML = s.about || '';
+    let left = shown, html = '';
+    lines.forEach((l, i) => {
+      if (left <= 0) return;
+      const part = l.slice(0, Math.min(l.length, left));
+      const typing = left <= l.length;
+      html += `<span class="row"><span class="ln">${i + 1}</span>${colour(part, s.hl)}${typing && shown < total ? '<span class="caret"></span>' : ''}</span>`;
+      left -= l.length + 1;
+    });
+    if (!html && s.code) html = `<span class="row"><span class="ln">1</span><span class="caret"></span></span>`;
+    $('code').innerHTML = html;
+  }
+
+  /* ---------- diagram geometry ---------- */
+  const PATHS = { logs: $('cLogs'), share: $('cShare'), csv: $('cCsv'), out: $('cOut') };
+  const LEN = {}; for (const k in PATHS) LEN[k] = PATHS[k].getTotalLength();
+  const at = (k, p) => PATHS[k].getPointAtLength(clamp(p) * LEN[k]);
+  const stepIdx = t => { let i = 0; STEPS.forEach((s, k) => { if (t >= s.t) i = k; }); return i; };
+  // Which cables each port lights, which way the data flows, and its colour.
+  const LANES = { logs: ['logs', 'logs', 'logs', 'logs'], share: ['share', 'share', 'share', 'share'], publish: ['share', 'csv', 'share', 'csv'], outlook: ['out', 'out', 'out', 'out'] };
+  const INWARD = { logs: true, share: true };
+  const LANE_COL = { logs: COL.xl, share: COL.share, csv: COL.csv, out: COL.ol };
+  const depT = i => T_DEP + 0.5 + (4 - i) * 0.6;
+  // The packet rides near each plate's front tip, clear of the plate's label and Python's chips.
+  const PKT = 48;
+
+  function render(t) {
+    const idx = stepIdx(t), s = STEPS[idx];
+
+    // build the stack: slabs drop in one by one
+    LAYERS.forEach((L, i) => {
+      const el = $('slab' + i);
+      const d = eout(seg(t, 4.0 + i * 0.55, 4.45 + i * 0.55));
+      const live = s.layer === i || (s.deploy && t >= depT(i));
+      const lift = s.layer === i ? -10 * eio(seg(t, s.t, s.t + 0.35)) : 0;
+      const dim = (s.layer !== undefined && s.layer !== i) ? 0.42 : 1;
+      tf(el, `translate(0 ${(1 - d) * -60 + lift})`);
+      op(el, d * dim);
+      $('top' + i).setAttribute('stroke', live ? '#E6EDF5' : '#18222E');
+      $('top' + i).setAttribute('stroke-width', live ? 3 : 2);
+      op($('ck' + i), s.deploy || s.bom ? seg(t, depT(i), depT(i) + 0.3) : 0);
+    });
+    op($('ckShare'), s.deploy || s.bom ? seg(t, T_DEP + 0.1, T_DEP + 0.4) : 0);
+    CHIPS.forEach(([n]) => {
+      const on = s.chip === n;
+      const ch = $('chip-' + n);
+      tf(ch, on ? `translate(0 ${-6 * eio(seg(t, s.t, s.t + 0.3))})` : '');
+      ch.querySelector('path').setAttribute('stroke', on ? '#FFF7E0' : '#18222E');
+      ch.querySelector('path').setAttribute('stroke-width', on ? 3 : 2);
+    });
+
+    // cables and the systems around the stack
+    const ext = d => seg(t, 6.5, 7.2) * d;
+    const port = s.port;
+    const cableOn = { logs: port === 'logs', share: port === 'share' || port === 'publish', csv: port === 'publish', out: port === 'outlook' };
+    for (const k in PATHS) { PATHS[k].classList.toggle('on', cableOn[k]); op(PATHS[k], ext(1)); }
+    op($('roTag'), ext(port === 'logs' ? 1 : 0.5));
+    [['xLogs', 'logs', COL.xl], ['xShare', 'share', COL.share], ['xCsv', 'csv', COL.csv], ['xOut', 'out', COL.ol]].forEach(([id, k, c]) => {
+      const on = cableOn[k] || (id === 'xShare' && (s.deploy || idx === 1));
+      $(id).classList.toggle('on', on);
+      op($(id), ext(on ? 1 : 0.55));
+      $(id).querySelector('rect.box').setAttribute('stroke', on ? c : '#2B3B50');
+    });
+    op($('trigChip'), ext(1));
+    op($('doneTag'), idx >= IDX('done') && !s.bom ? eout(seg(t, T_DONE + 1.1, T_DONE + 1.5)) : 0);
+
+    // data pulses along the live cables
+    const lanes = port ? LANES[port] : [];
+    for (let k = 0; k < 4; k++) {
+      const el = $('pu' + k);
+      if (!lanes[k] || t < s.t + 0.4) { op(el, 0); continue; }
+      let p = ((t - s.t) * 0.7 + k * 0.25) % 1;
+      if (INWARD[port]) p = 1 - p;                     // the data comes in to Python
+      const pt = at(lanes[k], p);
+      el.setAttribute('cx', pt.x); el.setAttribute('cy', pt.y);
+      el.setAttribute('fill', LANE_COL[lanes[k]]);
+      op(el, Math.sin(Math.PI * p) * 0.95 + 0.05);
+    }
+
+    // drafts popping out of Outlook
+    for (let k = 0; k < 4; k++) {
+      const el = $('sh' + k);
+      if (port !== 'outlook' || t < s.t + 0.9) { op(el, 0); continue; }
+      const p = ((t - s.t - 0.9) * 0.8 + k * 0.5) % 1;
+      const x = k % 2 ? 452 : 268;
+      tf(el, `translate(${x} ${728 - 34 * eout(p)})`);
+      op(el, 1 - p);
+    }
+
+    // the packet: drops in from the trigger, then sits in whichever layer is live
+    let py = null, px = CX;
+    if (t >= T_RUN && t < T_DEP && s.layer !== undefined) {
+      const prevLayer = idx > 0 && STEPS[idx - 1].layer !== undefined ? STEPS[idx - 1].layer : -1;
+      const fromY = prevLayer >= 0 ? LAYERS[prevLayer].y : 30 - PKT;
+      const toY = LAYERS[s.layer].y;
+      const p = eio(seg(t, s.t, s.t + 0.6));
+      py = lerp(fromY, toY, p);
+      // Going down a layer, swing out to the right so the packet never crosses the next plate's label.
+      if (fromY !== toY) px = CX + 80 * Math.sin(Math.PI * p);
+    }
+    if (py !== null) {
+      tf($('packet'), `translate(${px} ${py + PKT}) scale(${1 + 0.12 * Math.sin(t * 6)})`);
+      op($('packet'), seg(t, T_RUN, T_RUN + 0.2));
+      $('packet').querySelectorAll('circle').forEach(c => c.setAttribute('fill', s.lc || '#E6EDF5'));
+    } else op($('packet'), 0);
+
+    // overlays
+    op($('ovTitle'), 1 - seg(t, 3.0, 3.5));
+    op($('ovBom'), seg(t, T_BOM, T_BOM + 0.5));
+    BOM.forEach((_, i) => $('br' + i).classList.toggle('in', t >= T_BOM + 0.4 + i * 0.32));
+
+    renderCode(t, idx);
+  }
+  const DUR = T_BOM + 0.4 + BOM.length * 0.32 + 4;
+
+  /* ---------- sound: generated in the browser, always on ---------- */
+  let AC = null, OUT = null, NOISE = null;
+  function initAudio() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return false;
+    AC = new Ctx();
+    const comp = AC.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+    OUT = AC.createGain(); OUT.gain.value = 0.6; OUT.connect(comp); comp.connect(AC.destination);
+    NOISE = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
+    const d = NOISE.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    return true;
+  }
+  function env(g, at, peak, a, dur) { g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + a); g.gain.exponentialRampToValueAtTime(0.0001, at + dur); }
+  function tone(f, at, dur, type = 'sine', peak = 0.2, a = 0.005, filt = 0, f2 = 0) {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, at);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, at + dur * 0.8);
+    let node = o;
+    if (filt) { const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = filt; lp.Q.value = 3; o.connect(lp); node = lp; }
+    node.connect(g); g.connect(OUT); env(g, at, peak, a, dur); o.start(at); o.stop(at + dur + 0.05);
+  }
+  function noise(at, dur, peak, type = 'highpass', freq = 6000, q = 0.7, f2 = 0) {
+    const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+    s.buffer = NOISE; f.type = type; f.frequency.setValueAtTime(freq, at); f.Q.value = q;
+    if (f2) f.frequency.exponentialRampToValueAtTime(f2, at + dur);
+    s.connect(f); f.connect(g); g.connect(OUT); env(g, at, peak, 0.004, dur); s.start(at, Math.random() * 0.4); s.stop(at + dur + 0.05);
+  }
+  const ding = (at, f) => { tone(f, at, 0.6, 'sine', 0.16); tone(f * 2.01, at, 0.3, 'sine', 0.04); };
+  const EV = [];
+  const ev = (time, fn) => EV.push([time, fn]);
+  ev(0.3, at => noise(at, 1.2, 0.12, 'bandpass', 300, 0.8, 4000));
+  ev(1.2, at => [261.63, 392, 523.25].forEach((f, i) => ding(at + i * 0.12, f * 2)));
+  LAYERS.forEach((_, i) => ev(4.4 + i * 0.55, at => { tone(110 - i * 8, at, 0.25, 'sine', 0.5, 0.002, 0, 45); noise(at, 0.06, 0.2, 'lowpass', 1200); }));
+  ev(6.6, at => noise(at, 0.5, 0.06, 'bandpass', 800, 1, 3000));
+  // a blip as the packet enters each layer, then typing while the code writes itself
+  const BLIP = [660, 740, 830, 990, 1110];
+  STEPS.forEach(s => {
+    if (s.layer !== undefined) ev(s.t + 0.45, at => { tone(BLIP[s.layer], at, 0.12, 'square', 0.05, 0.003, 3000); tone(BLIP[s.layer] * 1.5, at + 0.06, 0.15, 'sine', 0.08); });
+    if (s.code && !s.bom) {
+      const total = s.code.length, dur = Math.min(3.2, 0.6 + total * 0.006);
+      for (let x = s.t + 0.3, k = 0; x < s.t + 0.25 + dur; k++) { ev(x, at => noise(at, 0.012, 0.09, 'bandpass', 3800, 2)); x += 0.055 + ((k * 7) % 5) * 0.012; }
+    }
+    const f = { logs: [520, 780], share: [600, 700], publish: [440, 700] }[s.port];
+    if (f) for (let x = s.t + 0.7; x < s.t + 4.8; x += 0.7) ev(x, at => tone(f[0], at, 0.18, 'sine', 0.07, 0.01, 0, f[1]));
+    if (s.port === 'outlook') for (let x = s.t + 0.9; x < s.t + 4.8; x += 0.62) ev(x, at => { tone(880, at, 0.14, 'sine', 0.06); noise(at, 0.12, 0.04, 'bandpass', 2400, 1.5, 6000); });
+  });
+  ev(T_DONE + 1.2, at => [1046.5, 1318.5, 1568].forEach((f, i) => ding(at + i * 0.09, f)));
+  [T_DEP + 0.1, ...[4, 3, 2, 1, 0].map(depT)].forEach((x, i) => ev(x, at => ding(at, 880 + i * 90)));
+  ev(T_BOM + 0.1, at => [130.81, 164.81, 196, 261.63, 329.63, 392].forEach(f => tone(f, at, 3.6, 'triangle', 0.06, 0.05, 2200)));
+  BOM.forEach((_, i) => ev(T_BOM + 0.4 + i * 0.32, at => tone(520 + i * 40, at, 0.06, 'sine', 0.05)));
+  // a quiet pulse underneath: 100 beats per minute
+  const CHORDS = [[220, 261.63, 329.63, 392], [174.61, 220, 261.63, 329.63], [261.63, 329.63, 392, 493.88], [196, 246.94, 293.66, 392]];
+  for (let e = 0; 3.5 + e * 0.3 < T_BOM - 0.6; e++) {
+    const x = 3.5 + e * 0.3, bar = Math.floor(e / 8) % 4, ch = CHORDS[bar];
+    ev(x, at => tone(ch[e % 4] * (e % 8 < 4 ? 1 : 2), at, 0.22, 'triangle', 0.028, 0.005, 2600));
+    if (e % 8 === 0) ev(x, at => tone(ch[0] / 2, at, 2.2, 'sine', 0.07, 0.04));
+    if (e % 4 === 0) ev(x, at => tone(120, at, 0.16, 'sine', 0.3, 0.002, 0, 45));
+    if (e % 2) ev(x, at => noise(at, 0.025, 0.03, 'highpass', 8000));
+  }
+  EV.sort((a, b) => a[0] - b[0]);
+  function audioStep(prev, cur) {
+    if (!AC) return;
+    if (cur < prev || cur - prev > 0.3) return;
+    const at = AC.currentTime + 0.02;
+    for (const [et, fn] of EV) { if (et > cur) break; if (et > prev) fn(at); }
+  }
+  function unlockAudio() { if (!AC && !initAudio()) return; if (AC.state === 'suspended') AC.resume(); }
+  ['pointerdown', 'touchstart', 'keydown'].forEach(type => document.addEventListener(type, unlockAudio, { passive: true }));
+
+  /* ---------- tap the screen to play or pause; Restart at the end ---------- */
+  let t = 0, playing = false, last = null, capIdx = -1;
+  const bigPlay = $('bigPlay'), pill = $('pausedPill'), stage = $('stage');
+  const ICON_PLAY = 'M8 5v14l11-7z', ICON_RESTART = 'M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z';
+  function sync() {
+    const atEnd = t >= DUR, mid = t > 0.01 && !atEnd;
+    bigPlay.hidden = playing || mid;
+    bigPlay.classList.toggle('end', atEnd); bigPlay.classList.toggle('start', !atEnd);
+    bigPlay.querySelector('span').textContent = atEnd ? 'Restart' : 'Play';
+    bigPlay.querySelector('path').setAttribute('d', atEnd ? ICON_RESTART : ICON_PLAY);
+    bigPlay.setAttribute('aria-label', atEnd ? 'Restart' : 'Play with sound');
+    pill.hidden = playing || !mid;
+    const idx = stepIdx(t);
+    if (idx !== capIdx) { capIdx = idx; $('capH').textContent = STEPS[idx].title; $('capP').textContent = STEPS[idx].desc; }
+  }
+  function toggle() { if (!playing && t >= DUR) t = 0; playing = !playing; last = null; sync(); }
+  stage.addEventListener('click', e => {
+    unlockAudio();
+    if (t >= DUR) { if (e.target.closest('#bigPlay')) toggle(); return; }
+    toggle();
+  });
+  document.addEventListener('keydown', e => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (e.code === 'Space' && tag !== 'button' && tag !== 'input') { e.preventDefault(); toggle(); }
+  });
+  function frame(ts) {
+    if (playing) {
+      if (last == null) last = ts;
+      const prev = t;
+      t = Math.min(DUR, t + Math.min(0.1, (ts - last) / 1000));
+      last = ts;
+      audioStep(prev, t);
+      if (t >= DUR) playing = false;
+      render(t); sync();
+    } else last = null;
+    requestAnimationFrame(frame);
+  }
+  function fitLabels() {
+    document.querySelectorAll('#slabs .lbl-t').forEach(el => {
+      el.style.fontSize = '';
+      let fs = parseFloat(getComputedStyle(el).fontSize);
+      while (el.getComputedTextLength() > 186 && fs > 12) { fs -= 1; el.style.fontSize = fs + 'px'; }
+    });
+  }
+  function sizeCode() {
+    const box = $('code'), keep = box.innerHTML;
+    stage.style.removeProperty('--code-h');
+    let max = 0;
+    STEPS.forEach(st => {
+      if (!st.code || st.bom) return;
+      box.innerHTML = st.code.split('\n').map((l, i) => `<span class="row"><span class="ln">${i + 1}</span>${colour(l, st.hl)}</span>`).join('');
+      max = Math.max(max, box.scrollHeight);
+    });
+    box.innerHTML = keep;
+    stage.style.setProperty('--code-h', max + 'px');
+  }
+  const relayout = () => { fitLabels(); sizeCode(); };
+  let rz = 0;
+  addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(relayout, 150); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
+  relayout();
+  window.__seek = s => { t = s; playing = false; render(t); sync(); };
+  window.__steps = STEPS.map(s => s.t);
+  render(t); sync();
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

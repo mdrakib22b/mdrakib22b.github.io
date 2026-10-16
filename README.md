@@ -10,6 +10,8 @@ The main page, `index.html`, plus `Md_Rakib_Resume.pdf`, which the Resume menu i
 
 `ifc-drawing-packet-printer.html` is a standalone animated walkthrough of how the IFC Drawing packet printer is built, layer by layer with excerpts of its real code. It's linked from the IFC Drawing packet printer's entry in the tools list.
 
+`dc-follow-up.html` does the same for the Document follow-up dashboard, linked from its entry in the tools list.
+
 ## Editing
 
 Tool write-ups live in the `TOOLS` array at the top of the script in `index.html`. Each entry has a name, a one-line summary, a `stat` (the headline number shown on the collapsed row), the stack, the problem, steps, results and links. Keep each field short: the collapsed rows are what most visitors read.
